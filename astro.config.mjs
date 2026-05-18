@@ -17,6 +17,6 @@ export default defineConfig({
     skipInline: false,
     drafts: true
   },
-  site: 'https://yourdomain.com',
+  site: 'https://kukode.treonstudio.com',
   integrations: [sitemap(), mdx()]
 });

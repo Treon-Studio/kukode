@@ -73,32 +73,7 @@ import { Image } from "astro:assets";
               </div>
             ))
           }
-          <dl class="divide-y divide-base-100">
-            <div class="flex itmes-center gap-2 justify-between py-2">
-              <dt>
-                <Text
-                  tag="h3"
-                  variant="textSM"
-                  class="text-base-900 font-medium"
-                >
-                  <span>Details</span>
-                </Text>
-              </dt>
-              <dd>
-                <ul role="list">
-                  {
-                    frontmatter.highlights.map((highlight) => (
-                      <li>
-                        <Text tag="p" variant="textSM" class="text-base-600">
-                          {highlight}
-                        </Text>
-                      </li>
-                    ))
-                  }
-                </ul>
-              </dd>
-            </div>
-          </dl>
+          
           <Text tag="p" variant="textSM" class="text-base-600 mt-4">
             {frontmatter.license}
           </Text>

@@ -10,12 +10,12 @@ import '@/styles/global.css';
 // <BaseLayout hideNavigation={true} hideFooter={true}   />
 const {
   hideNavigation = false,
+  hideNav = false,
   hideFooter = false,
   hideSearch, // legacy flag
   showSearch = false,
 } = Astro.props;
 const renderSearch = showSearch || hideSearch === false;
-import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <html

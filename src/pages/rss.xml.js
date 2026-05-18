@@ -1,10 +1,21 @@
-import rss, { pagesGlobToRssItems } from '@astrojs/rss';
+import rss from '@astrojs/rss';
+import { getCollection } from 'astro:content';
+
 export async function GET(context) {
+  const posts = await getCollection('posts');
+  const sortedPosts = posts.sort(
+    (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
+  );
+
   return rss({
-    title: 'Lexington Themes',
-    description:
-      'Free and premium multipage themes and UI Kits For freelancers, developers, businesses, and personal use.Beautifully crafted with Astro.js, and Tailwind CSS — Simple & easy to customise.',
+    title: 'Kukode',
+    description: 'Platform pengembangan web modern',
     site: context.site,
-    items: await pagesGlobToRssItems(import.meta.glob('./blog/*.{md,mdx}')),
+    items: sortedPosts.map((post) => ({
+      title: post.data.title,
+      pubDate: post.data.pubDate,
+      description: post.data.description,
+      link: `/blog/posts/${post.id}/`,
+    })),
   });
 }

@@ -1,110 +1,109 @@
 ---
-// Fundations
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 // Array with links to all pages
 const pages = [
   {
-    title: "Static pages",
+    title: 'Static pages',
     categories: [
       {
-        title: "Pages",
+        title: 'Pages',
         links: [
-          { href: "/", text: "Home" },
-          { href: "/about", text: "About" },
-          { href: "/404", text: "404" },
+          { href: '/', text: 'Home' },
+          { href: '/about', text: 'About' },
+          { href: '/404', text: '404' },
         ],
       },
       {
-        title: "Advertise",
+        title: 'Advertise',
         links: [
-          { href: "/pricing", text: "Membership" },
-          { href: "/advertise", text: "Advertise" },
+          { href: '/pricing', text: 'Membership' },
+          { href: '/advertise', text: 'Advertise' },
         ],
       },
       {
-        title: "Forms",
+        title: 'Forms',
         links: [
-          { href: "/signin", text: "Sing in" },
-          { href: "/signup", text: "Sing up" },
+          { href: '/signin', text: 'Sing in' },
+          { href: '/signup', text: 'Sing up' },
 
-          { href: "/submit", text: "Submit" },
+          { href: '/submit', text: 'Submit' },
         ],
       },
       {
-        title: "System",
+        title: 'System',
         links: [
-          { href: "/system/links", text: "Links" },
-          { href: "/system/buttons", text: "Buttons" },
-          { href: "/system/colors", text: "Colors" },
-          { href: "/system/typography", text: "Typography" },
+          { href: '/system/links', text: 'Links' },
+          { href: '/system/buttons', text: 'Buttons' },
+          { href: '/system/colors', text: 'Colors' },
+          { href: '/system/typography', text: 'Typography' },
           {
-            href: "https://treonstudio.com/legal/license",
-            text: "License",
+            href: 'https://treonstudio.com/legal/license',
+            text: 'License',
           },
           {
-            href: "https://treonstudio.com/legal/support",
-            text: "Support",
+            href: 'https://treonstudio.com/legal/support',
+            text: 'Support',
           },
           {
-            href: "https://treonstudio.com/documentation/",
-            text: "Documentation",
+            href: 'https://treonstudio.com/documentation/',
+            text: 'Documentation',
           },
         ],
       },
     ],
   },
   {
-    title: "Content collections",
+    title: 'Content collections',
     categories: [
       {
-        title: "Directory",
+        title: 'Directory',
         links: [
-          { href: "/sites/", text: "Home" },
-          { href: "/sites/site/1", text: "Details" },
-          { href: "/sites/tags", text: "Tag index" },
-          { href: "/sites/tags/design", text: "Tag category" },
+          { href: '/sites/', text: 'Home' },
+          { href: '/sites/site/1', text: 'Details' },
+          { href: '/sites/tags', text: 'Tag index' },
+          { href: '/sites/tags/design', text: 'Tag category' },
         ],
       },
       {
-        title: "Blog",
+        title: 'Blog',
         links: [
-          { href: "/blog/", text: "Home" },
-          { href: "/blog/posts/1", text: "Details" },
-          { href: "/blog/tags", text: "Tag index" },
-          { href: "/blog/tags/3d", text: "Tag category" },
-          { href: "/rss.xml", text: "RSS" },
+          { href: '/blog/', text: 'Home' },
+          { href: '/blog/posts/1', text: 'Details' },
+          { href: '/blog/tags', text: 'Tag index' },
+          { href: '/blog/tags/3d', text: 'Tag category' },
+          { href: '/rss.xml', text: 'RSS' },
         ],
       },
       {
-        title: "Store",
+        title: 'Store',
         links: [
-          { href: "/store/", text: "Home" },
-          { href: "/store/1", text: "Details" },
+          { href: '/store/', text: 'Home' },
+          { href: '/store/1', text: 'Details' },
         ],
       },
       {
-        title: "Legal",
+        title: 'Legal',
         links: [
-          { href: "/legal/terms", text: "Terms" },
-          { href: "/legal/privacy", text: "Privacy" },
+          { href: '/legal/terms', text: 'Terms' },
+          { href: '/legal/privacy', text: 'Privacy' },
         ],
       },
     ],
   },
 ];
 const modalIds = {
-  submit: "submit-modal",
-  bookmarks: "bookmarks-modal",
-  createCollection: "create-collection-modal",
-  editCollection: "edit-collection-modal",
-  removeCollection: "remove-collection-modal",
-  subscribe: "subscribe-modal",
-  deleteAccount: "delete-account-modal",
-  editAccount: "edit-account-modal",
-  createAccount: "create-account-modal",
+  submit: 'submit-modal',
+  bookmarks: 'bookmarks-modal',
+  createCollection: 'create-collection-modal',
+  editCollection: 'edit-collection-modal',
+  removeCollection: 'remove-collection-modal',
+  subscribe: 'subscribe-modal',
+  deleteAccount: 'delete-account-modal',
+  editAccount: 'edit-account-modal',
+  createAccount: 'create-account-modal',
 };
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
 ---
 
 <BaseLayout>

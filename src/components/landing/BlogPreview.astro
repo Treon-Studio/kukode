@@ -1,13 +1,12 @@
 ---
-// Fundation
+// Cotent
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts');
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
 import BlogCard from "@/components/blog/BlogCard.astro";
-// Cotent
-import { getCollection } from "astro:content";
-const allPosts = await getCollection("posts");
 ---
 
 <section>

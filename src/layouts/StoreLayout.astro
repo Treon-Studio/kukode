@@ -1,20 +1,17 @@
 ---
-// Assets
-import { Image } from "astro:assets";
-// Fundation
-import BaseLayout from "./BaseLayout.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Icons
-import Checkout from "@/components/fundations/icons/Checkout.astro";
-// Components
-import StoreCard from "@/components/store/StoreCard.astro";
 // Retrieve all posts from the "store" collection
-import { getCollection } from "astro:content";
-const allstore = await getCollection("store");
+import { getCollection } from 'astro:content';
+
+const allstore = await getCollection('store');
 // Frontmatter
 const { frontmatter } = Astro.props;
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Checkout from "@/components/fundations/icons/Checkout.astro";
+import StoreCard from "@/components/store/StoreCard.astro";
+import { Image } from "astro:assets";
 ---
 
 <BaseLayout>

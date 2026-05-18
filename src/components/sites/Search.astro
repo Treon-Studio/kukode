@@ -1,15 +1,15 @@
 ---
-// Icons
-import Close from "@/components/fundations/icons/Close.astro";
-import Command from "@/components/fundations/icons/Command.astro";
 // Content
-import { getCollection } from "astro:content";
-const allSites = await getCollection("sites");
+import { getCollection } from 'astro:content';
+
+const allSites = await getCollection('sites');
 const posts = allSites.map((post) => ({
   title: post.data.title,
   tagline: post.data.tagline,
   id: post.id,
 }));
+import Command from "@/components/fundations/icons/Command.astro";
+import Close from "@/components/fundations/icons/Close.astro";
 ---
 <div class="relative p-4">
   <div

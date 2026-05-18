@@ -1,13 +1,13 @@
-import { defineCollection } from "astro:content";
-import { z } from "astro/zod";
-import { glob } from "astro/loaders";
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 
-const globId = ({ entry }: { entry: string }) => entry.replace(/\.(md|mdx)$/, "");
+const globId = ({ entry }: { entry: string }) => entry.replace(/\.(md|mdx)$/, '');
 
 const legal = defineCollection({
   loader: glob({
-    pattern: "**/*.md",
-    base: "./src/content/legal",
+    pattern: '**/*.md',
+    base: './src/content/legal',
     generateId: globId,
   }),
   schema: z.object({
@@ -18,8 +18,8 @@ const legal = defineCollection({
 
 const store = defineCollection({
   loader: glob({
-    pattern: "**/*.md",
-    base: "./src/content/store",
+    pattern: '**/*.md',
+    base: './src/content/store',
     generateId: globId,
   }),
   schema: ({ image }) =>
@@ -54,8 +54,8 @@ const store = defineCollection({
 
 const sites = defineCollection({
   loader: glob({
-    pattern: "**/*.md",
-    base: "./src/content/sites",
+    pattern: '**/*.md',
+    base: './src/content/sites',
     generateId: globId,
   }),
   schema: ({ image }) =>
@@ -83,8 +83,8 @@ const sites = defineCollection({
 
 const posts = defineCollection({
   loader: glob({
-    pattern: "**/*.md",
-    base: "./src/content/posts",
+    pattern: '**/*.md',
+    base: './src/content/posts',
     generateId: globId,
   }),
   schema: ({ image }) =>

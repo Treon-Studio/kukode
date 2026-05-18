@@ -1,35 +1,33 @@
 ---
-// Layout
-import BaseLayout from "@/layouts/BaseLayout.astro";
-// Fundation
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 // Data
 const packages = [
   {
-    name: "Website Feature",
-    price: "$999",
+    name: 'Website Feature',
+    price: '$999',
     features: [
-      { label: "Homepage placement", value: "7 days live" },
-      { label: "Newsletter highlight", value: "1x weekly send" },
-      { label: "Social push", value: "1x on X + LinkedIn" },
+      { label: 'Homepage placement', value: '7 days live' },
+      { label: 'Newsletter highlight', value: '1x weekly send' },
+      { label: 'Social push', value: '1x on X + LinkedIn' },
     ],
     description:
-      "A bespoke write-up on Carbon that shows your product in context. Great for launches that need instant credibility.",
+      'A bespoke write-up on Carbon that shows your product in context. Great for launches that need instant credibility.',
   },
   {
-    name: "Newsletter Ad",
-    price: "$1,299",
+    name: 'Newsletter Ad',
+    price: '$1,299',
     features: [
-      { label: "Audience", value: "7,800+ subscribers" },
-      { label: "Send cadence", value: "2 consecutive issues" },
-      { label: "Creative", value: "We help refine your copy" },
+      { label: 'Audience', value: '7,800+ subscribers' },
+      { label: 'Send cadence', value: '2 consecutive issues' },
+      { label: 'Creative', value: 'We help refine your copy' },
     ],
     description:
-      "Secure ad space in our weekly newsletter. Reach a curated audience of designers and builders looking for production tools.",
+      'Secure ad space in our weekly newsletter. Reach a curated audience of designers and builders looking for production tools.',
   },
 ];
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
 ---
 <BaseLayout>
   <section>

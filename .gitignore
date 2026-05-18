@@ -1,0 +1,15 @@
+# build output
+dist/
+# npm
+node_modules/
+package-lock.json
+# Astro
+.astro/
+# Environment Variables
+.env
+.env.*
+!.env.example
+# OS and Editor
+.DS_Store
+.vscode/
+.idea/

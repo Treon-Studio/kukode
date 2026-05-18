@@ -1,13 +1,12 @@
 ---
-// Fundation
+// Store
+import { getCollection } from 'astro:content';
+
+const allProducts = await getCollection('store');
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
 import Text from "@/components/fundations/elements/Text.astro";
 import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
 import StoreCard from "@/components/store/StoreCard.astro";
-// Store
-import { getCollection } from "astro:content";
-const allProducts = await getCollection("store");
 ---
 
 <section>

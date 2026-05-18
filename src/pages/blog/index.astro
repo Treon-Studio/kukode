@@ -1,15 +1,8 @@
 ---
-// Layout
-import BaseLayout from "@/layouts/BaseLayout.astro";
-// Fundation
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
-import BlogCard from "@/components/blog/BlogCard.astro";
 // Retrieve all posts from the "posts" collection, which returns an unsorted array of post objects
-import { getCollection } from "astro:content";
-const allPostsUnsorted = await getCollection("posts");
+import { getCollection } from 'astro:content';
+
+const allPostsUnsorted = await getCollection('posts');
 // Sort the posts in descending order by publication date (newest to oldest)
 const allPosts = allPostsUnsorted.sort(
   (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
@@ -17,6 +10,11 @@ const allPosts = allPostsUnsorted.sort(
 // Collect all unique tags
 const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags || []))];
 const sortedTags = allTags.sort((a, b) => a.localeCompare(b));
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import BlogCard from "@/components/blog/BlogCard.astro";
 ---
 
 <BaseLayout>

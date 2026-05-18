@@ -1,21 +1,17 @@
 ---
-// Assets
-import { Image } from "astro:assets";
-// Layout
-import BaseLayout from "./BaseLayout.astro";
-// Fundation
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Icons
-import ArrowupRight from "@/components/fundations/icons/ArrowUpRight.astro";
-// Components
-import BigCard from "@/components/sites/SiteCard.astro";
 // Retrieve all posts from the "posts" collection
-import { getCollection } from "astro:content";
-const alltools = await getCollection("sites");
+import { getCollection } from 'astro:content';
+
+const alltools = await getCollection('sites');
 // Frontmatter
 const { frontmatter } = Astro.props;
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import { Image } from "astro:assets";
+import ArrowupRight from "@/components/fundations/icons/ArrowUpRight.astro";
+import SiteCard from "@/components/sites/SiteCard.astro";
 ---
 
 <BaseLayout showSearch={true}>
@@ -92,7 +88,7 @@ const { frontmatter } = Astro.props;
         </Button>
       </div>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 mt-8">
-        {alltools.slice(0, 4).map((post) => <BigCard post={post} />)}
+        {alltools.slice(0, 4).map((post) => <SiteCard post={post} />)}
       </div>
     </Wrapper>
   </section>

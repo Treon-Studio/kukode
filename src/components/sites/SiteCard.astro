@@ -1,15 +1,13 @@
 ---
-// Assets
-import { Image } from "astro:assets";
-// Fundations
-import Text from "@/components/fundations/elements/Text.astro";
 // Content
 const { title, url, thumbnail, live } = {
-  url: "/sites/site/" + Astro.props.post.id,
+  url: '/sites/site/' + Astro.props.post.id,
   live: Astro.props.post.data.live,
   title: Astro.props.post.data.title,
   thumbnail: Astro.props.post.data.thumbnail.url,
 };
+import Text from "@/components/fundations/elements/Text.astro";
+import { Image } from "astro:assets";
 ---
 
 <div

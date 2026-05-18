@@ -1,40 +1,37 @@
 ---
-// Layout
-import BaseLayout from "@/layouts/BaseLayout.astro";
-// Fundation
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
-import Faq from "@/components/global/Faq.astro";
 const plans = [
   {
-    name: "Free",
-    description: "Get limited access to everything.",
-    priceStatic: "$0",
-    buttonVariant: "default",
+    name: 'Free',
+    description: 'Get limited access to everything.',
+    priceStatic: '$0',
+    buttonVariant: 'default',
     features: [
-      { label: "Bookmarks", value: "Save up to 5 favorites" },
-      { label: "Filters", value: "Basic filters for quick scans" },
-      { label: "Email", value: "Weekly inspiration roundup" },
-      { label: "Support", value: "Community help" },
+      { label: 'Bookmarks', value: 'Save up to 5 favorites' },
+      { label: 'Filters', value: 'Basic filters for quick scans' },
+      { label: 'Email', value: 'Weekly inspiration roundup' },
+      { label: 'Support', value: 'Community help' },
     ],
   },
   {
-    name: "Team",
-    description: "Get limited access to everything.",
-    priceMonthly: "$9",
-    priceAnnual: "$6",
-    buttonVariant: "accent",
+    name: 'Team',
+    description: 'Get limited access to everything.',
+    priceMonthly: '$9',
+    priceAnnual: '$6',
+    buttonVariant: 'accent',
     features: [
-      { label: "Bookmarks & collections", value: "Unlimited for teams" },
-      { label: "Filters & tags", value: "Advanced + saved searches" },
-      { label: "Workspace", value: "Shared lists for teammates" },
-      { label: "Exports", value: "CSV / Notion ready" },
-      { label: "Support", value: "Priority replies" },
+      { label: 'Bookmarks & collections', value: 'Unlimited for teams' },
+      { label: 'Filters & tags', value: 'Advanced + saved searches' },
+      { label: 'Workspace', value: 'Shared lists for teammates' },
+      { label: 'Exports', value: 'CSV / Notion ready' },
+      { label: 'Support', value: 'Priority replies' },
     ],
   },
 ];
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import Faq from "@/components/global/Faq.astro";
 ---
 
 <BaseLayout>

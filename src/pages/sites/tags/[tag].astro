@@ -1,24 +1,13 @@
 ---
-// Layout
-import BaseLayout from "@/layouts/BaseLayout.astro";
-// Fundation
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
-import BigCard from "@/components/sites/SiteCard.astro";
 // Retrieve all posts from the "posts" collection
-const alltools = await getCollection("sites");
-import { getCollection } from "astro:content";
+const alltools = await getCollection('sites');
+
+import { getCollection } from 'astro:content';
 export async function getStaticPaths() {
-  const allTools = await getCollection("sites");
-  const uniqueTags = [
-    ...new Set(allTools.map((post) => post.data.tags).flat()),
-  ];
+  const allTools = await getCollection('sites');
+  const uniqueTags = [...new Set(allTools.flatMap((post) => post.data.tags))];
   return uniqueTags.map((tag) => {
-    const filteredPosts = allTools.filter((post) =>
-      post.data.tags.includes(tag)
-    );
+    const filteredPosts = allTools.filter((post) => post.data.tags.includes(tag));
     return {
       params: { tag },
       props: { tools: filteredPosts },
@@ -31,6 +20,11 @@ const allTags = [...new Set(alltools.flatMap((post) => post.data.tags || []))];
 const sortedTags = allTags.sort((a, b) => a.localeCompare(b));
 
 // Facets removed (filters button hidden)
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Text from "@/components/fundations/elements/Text.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import SiteCard from "@/components/sites/SiteCard.astro";
 ---
 
 <BaseLayout pageTitle={tag} showSearch={true}>
@@ -68,7 +62,7 @@ const sortedTags = allTags.sort((a, b) => a.localeCompare(b));
         {
           alltools
             .filter((post) => post.data.tags.includes(tag)) // Filter by the selected tag
-            .map((filteredPost) => <BigCard post={filteredPost} />)
+            .map((filteredPost) => <SiteCard post={filteredPost} />)
         }
       </div>
     </Wrapper>

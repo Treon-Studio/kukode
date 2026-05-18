@@ -1,7 +1,7 @@
-import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
-import sitemap from "@astrojs/sitemap";
-import mdx from "@astrojs/mdx"; 
+import { defineConfig } from 'astro/config';
 export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
@@ -9,14 +9,14 @@ export default defineConfig({
   markdown: {
     drafts: true,
     shikiConfig: {
-      theme: "min-light"
-    }
+      theme: 'min-light',
+    },
   },
   shikiConfig: {
     wrap: true,
     skipInline: false,
-    drafts: true
+    drafts: true,
   },
   site: 'https://kukode.treonstudio.com',
-  integrations: [sitemap(), mdx()]
+  integrations: [sitemap(), mdx()],
 });

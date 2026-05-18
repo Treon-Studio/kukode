@@ -1,17 +1,16 @@
 ---
-// Fundation
-import Button from "@/components/fundations/elements/Button.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-// Components
-import SiteCard from "@/components/sites/SiteCard.astro";
-import SponsorCard from "@/components/sites/SponsorCard.astro";
 // Content
-import { getCollection } from "astro:content";
-const alltools = await getCollection("sites");
+import { getCollection } from 'astro:content';
+
+const alltools = await getCollection('sites');
 const allTags = [...new Set(alltools.flatMap((post) => post.data.tags || []))];
 const sortedTags = allTags.sort((a, b) => a.localeCompare(b));
 const initialVisible = 7;
 const step = initialVisible;
+import Wrapper from "@/components/fundations/containers/Wrapper.astro";
+import Button from "@/components/fundations/elements/Button.astro";
+import SiteCard from "@/components/sites/SiteCard.astro";
+import SponsorCard from "@/components/sites/SponsorCard.astro";
 ---
 
 <section data-sites-preview data-step={step} data-initial={initialVisible}>

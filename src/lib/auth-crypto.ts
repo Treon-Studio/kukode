@@ -79,7 +79,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: saltBytes,
+      salt: saltBytes as any,
       iterations: iterations,
       hash: 'SHA-256',
     },

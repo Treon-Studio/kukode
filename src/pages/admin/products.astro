@@ -6,8 +6,8 @@ import { db } from '@/db';
 import { profiles, submittedSites } from '@/db/schema';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 
-const user = Astro.locals.user;
-const profile = Astro.locals.profile;
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
 
 if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/signin');

@@ -125,7 +125,7 @@ const step = initialVisible;
       data-sites-list
     >
       {
-        alltools.map((post, i) => (
+        alltools.map((post: any, i) => (
           <>
             <div data-site-card class={i >= initialVisible ? "hidden" : ""}>
               <SiteCard 

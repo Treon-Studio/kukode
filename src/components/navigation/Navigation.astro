@@ -3,22 +3,26 @@ import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Logo from '@/components/global/Logo.astro';
 import MobileNav from './MobileNav.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
 // Get user and profile from middleware (Astro.locals)
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
 const isLoggedIn = !!user;
 
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+
 // Quick access links
 const links = [
-  { href: '/system/overview', text: 'Overview' },
-  { href: '/', text: 'Websites' },
-  { href: '/pricing/', text: 'Pricing' },
-  { href: '/blog/', text: 'Blog' },
-  { href: '/store/', text: 'Store' },
-  { href: '/submit/', text: 'Submit' },
-  { href: '/advertise/', text: 'Sponsors' },
-  { href: 'https://treonstudio.com/templates/kukode', text: 'Buy Kukode' },
+  { href: '/system/overview', text: t('nav.overview') },
+  { href: '/', text: t('nav.websites') },
+  { href: '/pricing/', text: t('nav.pricing') },
+  { href: '/blog/', text: t('nav.blog') },
+  { href: '/store/', text: t('nav.store') },
+  { href: '/submit/', text: t('nav.submit') },
+  { href: '/advertise/', text: t('nav.sponsors') },
+  { href: 'https://treonstudio.com/templates/kukode', text: t('nav.buyKukode') },
 ];
 ---
 
@@ -47,6 +51,42 @@ const links = [
           }
         </div>
 
+        <!-- Language Switcher -->
+        <div class="relative inline-block text-left" data-lang-dropdown>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-xs font-medium text-base-600 hover:text-base-900 border border-base-200 px-2.5 py-1.5 rounded-md bg-white hover:bg-base-50 transition-colors focus:outline-none focus:ring-1 focus:ring-accent-500"
+            data-lang-dropdown-toggle
+            aria-expanded="false"
+            aria-haspopup="true"
+          >
+            <span class="uppercase font-semibold text-[10px] tracking-wider">{lang}</span>
+            <svg class="size-3 text-base-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <div
+            class="hidden absolute right-0 mt-2 w-36 rounded-lg bg-white shadow-lg ring-1 ring-base-200 py-1 z-50 focus:outline-none"
+            data-lang-dropdown-menu
+            role="menu"
+          >
+            <a
+              href="?lang=en"
+              role="menuitem"
+              class={`block px-4 py-2 text-xs transition-colors hover:bg-base-50 ${lang === 'en' ? 'font-semibold text-accent-600' : 'text-base-700'}`}
+            >
+              English
+            </a>
+            <a
+              href="?lang=id"
+              role="menuitem"
+              class={`block px-4 py-2 text-xs transition-colors hover:bg-base-50 ${lang === 'id' ? 'font-semibold text-accent-600' : 'text-base-700'}`}
+            >
+              Bahasa Indonesia
+            </a>
+          </div>
+        </div>
+
         {isLoggedIn ? (
           <div class="relative" data-user-dropdown>
             <button
@@ -68,7 +108,6 @@ const links = [
                 </div>
               )}
             </button>
-            {/* Dropdown menu */}
             <div
               class="hidden absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg ring-1 ring-base-200 py-1 z-50"
               data-user-dropdown-menu
@@ -83,20 +122,20 @@ const links = [
                 href="/dashboard"
                 class="block px-4 py-2 text-xs text-base-700 hover:bg-base-50"
               >
-                Dashboard
+                {t('nav.dashboard')}
               </a>
               <a
                 href="/dashboard/settings"
                 class="block px-4 py-2 text-xs text-base-700 hover:bg-base-50"
               >
-                Settings
+                {t('nav.settings')}
               </a>
               {profile?.role === 'admin' && (
                 <a
                   href="/admin"
                   class="block px-4 py-2 text-xs text-base-700 hover:bg-base-50"
                 >
-                  Admin Panel
+                  {t('nav.admin')}
                 </a>
               )}
               <form method="POST" action="/api/auth/signout" class="border-t border-base-100">
@@ -104,7 +143,7 @@ const links = [
                   type="submit"
                   class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
                 >
-                  Sign out
+                  {t('nav.signout')}
                 </button>
               </form>
             </div>
@@ -112,14 +151,14 @@ const links = [
         ) : (
           <>
             <Button isLink size="xs" variant="muted" href="/signin" class="shrink-0"
-              >Sign in</Button
+              >{t('nav.signin')}</Button
             >
             <Button
               isLink
               size="xs"
               variant="default"
               href="/signup"
-              class="shrink-0">Sign up</Button
+              class="shrink-0">{t('nav.signup')}</Button
             >
           </>
         )}
@@ -131,27 +170,63 @@ const links = [
 <script is:inline>
   // User dropdown toggle
   (() => {
-    const container = document.querySelector('[data-user-dropdown]');
-    if (!container) return;
-    const toggle = container.querySelector('[data-user-dropdown-toggle]');
-    const menu = container.querySelector('[data-user-dropdown-menu]');
-    if (!toggle || !menu) return;
-
-    toggle.addEventListener('click', () => {
-      const isOpen = !menu.classList.contains('hidden');
-      if (isOpen) {
-        menu.classList.add('hidden');
-        toggle.setAttribute('aria-expanded', 'false');
-      } else {
-        menu.classList.remove('hidden');
-        toggle.setAttribute('aria-expanded', 'true');
+    const userContainer = document.querySelector('[data-user-dropdown]');
+    if (userContainer) {
+      const toggle = userContainer.querySelector('[data-user-dropdown-toggle]');
+      const menu = userContainer.querySelector('[data-user-dropdown-menu]');
+      if (toggle && menu) {
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = !menu.classList.contains('hidden');
+          if (isOpen) {
+            menu.classList.add('hidden');
+            toggle.setAttribute('aria-expanded', 'false');
+          } else {
+            menu.classList.remove('hidden');
+            toggle.setAttribute('aria-expanded', 'true');
+            // Close other dropdowns
+            document.querySelector('[data-lang-dropdown-menu]')?.classList.add('hidden');
+          }
+        });
       }
-    });
+    }
 
-    document.addEventListener('click', (e) => {
-      if (!container.contains(e.target)) {
-        menu.classList.add('hidden');
-        toggle.setAttribute('aria-expanded', 'false');
+    // Language dropdown toggle
+    const langContainer = document.querySelector('[data-lang-dropdown]');
+    if (langContainer) {
+      const toggle = langContainer.querySelector('[data-lang-dropdown-toggle]');
+      const menu = langContainer.querySelector('[data-lang-dropdown-menu]');
+      if (toggle && menu) {
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = !menu.classList.contains('hidden');
+          if (isOpen) {
+            menu.classList.add('hidden');
+            toggle.setAttribute('aria-expanded', 'false');
+          } else {
+            menu.classList.remove('hidden');
+            toggle.setAttribute('aria-expanded', 'true');
+            // Close other dropdowns
+            document.querySelector('[data-user-dropdown-menu]')?.classList.add('hidden');
+          }
+        });
+      }
+    }
+
+    // Global click listener to close dropdowns
+    document.addEventListener('click', () => {
+      const userMenu = document.querySelector('[data-user-dropdown-menu]');
+      const userToggle = document.querySelector('[data-user-dropdown-toggle]');
+      if (userMenu && userToggle) {
+        userMenu.classList.add('hidden');
+        userToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      const langMenu = document.querySelector('[data-lang-dropdown-menu]');
+      const langToggle = document.querySelector('[data-lang-dropdown-toggle]');
+      if (langMenu && langToggle) {
+        langMenu.classList.add('hidden');
+        langToggle.setAttribute('aria-expanded', 'false');
       }
     });
   })();

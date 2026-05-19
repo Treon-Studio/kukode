@@ -1,45 +1,48 @@
 ---
-export const prerender = true;
-const plans = [
-  {
-    name: 'Free',
-    description: 'Get limited access to everything.',
-    priceStatic: '$0',
-    buttonVariant: 'default',
-    features: [
-      { label: 'Bookmarks', value: 'Save up to 5 favorites' },
-      { label: 'Filters', value: 'Basic filters for quick scans' },
-      { label: 'Email', value: 'Weekly inspiration roundup' },
-      { label: 'Support', value: 'Community help' },
-    ],
-  },
-  {
-    name: 'Team',
-    description: 'Get limited access to everything.',
-    priceMonthly: '$9',
-    priceAnnual: '$6',
-    buttonVariant: 'accent',
-    features: [
-      { label: 'Bookmarks & collections', value: 'Unlimited for teams' },
-      { label: 'Filters & tags', value: 'Advanced + saved searches' },
-      { label: 'Workspace', value: 'Shared lists for teammates' },
-      { label: 'Exports', value: 'CSV / Notion ready' },
-      { label: 'Support', value: 'Priority replies' },
-    ],
-  },
-];
-
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import Faq from '@/components/global/Faq.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+
+const plans = [
+  {
+    name: lang === 'en' ? 'Free' : 'Gratis',
+    description: lang === 'en' ? 'Get limited access to everything.' : 'Dapatkan akses terbatas untuk semua fitur.',
+    priceStatic: '$0',
+    buttonVariant: 'default',
+    features: [
+      { label: lang === 'en' ? 'Bookmarks' : 'Bookmark', value: lang === 'en' ? 'Save up to 5 favorites' : 'Simpan hingga 5 favorit' },
+      { label: lang === 'en' ? 'Filters' : 'Filter', value: lang === 'en' ? 'Basic filters for quick scans' : 'Filter dasar untuk pencarian cepat' },
+      { label: lang === 'en' ? 'Email' : 'Email', value: lang === 'en' ? 'Weekly inspiration roundup' : 'Ringkasan inspirasi mingguan' },
+      { label: lang === 'en' ? 'Support' : 'Dukungan', value: lang === 'en' ? 'Community help' : 'Bantuan komunitas' },
+    ],
+  },
+  {
+    name: lang === 'en' ? 'Team' : 'Tim',
+    description: lang === 'en' ? 'Get full workspace access.' : 'Dapatkan akses penuh ke ruang kerja.',
+    priceMonthly: '$9',
+    priceAnnual: '$6',
+    buttonVariant: 'accent',
+    features: [
+      { label: lang === 'en' ? 'Bookmarks & collections' : 'Bookmark & koleksi', value: lang === 'en' ? 'Unlimited for teams' : 'Tanpa batas untuk tim' },
+      { label: lang === 'en' ? 'Filters & tags' : 'Filter & tag', value: lang === 'en' ? 'Advanced + saved searches' : 'Pencarian lanjutan + tersimpan' },
+      { label: lang === 'en' ? 'Workspace' : 'Ruang kerja', value: lang === 'en' ? 'Shared lists for teammates' : 'Daftar bersama untuk rekan tim' },
+      { label: lang === 'en' ? 'Exports' : 'Ekspor', value: 'CSV / Notion ready' },
+      { label: lang === 'en' ? 'Support' : 'Dukungan', value: lang === 'en' ? 'Priority replies' : 'Balasan prioritas' },
+    ],
+  },
+];
 ---
 
 <BaseLayout
   seoProps={{
-    title: 'Pricing Plans',
-    description: 'Access the full library and use it like a pro. Choose a plan to unlock deeper filtering and unlimited collections.',
+    title: t('pricing.title'),
+    description: t('pricing.subtitle'),
     url: '/pricing/',
   }}
 >
@@ -51,12 +54,10 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
           variant="displayLG"
           class="text-base-900 font-display font-light"
         >
-          <span class="block">Access the full library.</span>
-          <span class="block">Use it like a pro.</span>
+          {t('pricing.title')}
         </Text>
         <Text tag="p" variant="textBase" class="text-base-600 mt-4">
-          Choose a plan to unlock deeper filtering, unlimited saves, and tools
-          built for designers who study real production websites—not theory.
+          {t('pricing.subtitle')}
         </Text>
       </div>
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-12">
@@ -91,7 +92,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
                         {plan.priceMonthly ?? plan.priceAnnual ?? ""}
                       </span>
                       {plan.priceMonthly && (
-                        <span class="text-lg ml-1 text-base-700">/month</span>
+                        <span class="text-lg ml-1 text-base-700">/{lang === 'en' ? 'month' : 'bulan'}</span>
                       )}
                     </Text>
                   )}
@@ -118,10 +119,11 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
               <Button
                 size="base"
                 variant="default"
-                submit="true"
+                isLink={true}
+                href="/signin"
                 class="w-fit mt-8"
               >
-                Get started
+                {t('pricing.choosePlan')}
               </Button>
             </div>
           ))

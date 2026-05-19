@@ -13,6 +13,24 @@ import { AUTH_CONFIG } from '@/lib/constants';
  */
 export const onRequest = defineMiddleware(
   async ({ request, cookies, locals, url, redirect }, next) => {
+    // Detect preferred language
+    let lang = url.searchParams.get('lang');
+    if (lang === 'en' || lang === 'id') {
+      cookies.set('preferred_lang', lang, {
+        path: '/',
+        httpOnly: false,
+        secure: import.meta.env.PROD,
+        sameSite: 'lax',
+        expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      });
+    } else {
+      lang = cookies.get('preferred_lang')?.value || 'en';
+      if (lang !== 'en' && lang !== 'id') {
+        lang = 'en';
+      }
+    }
+    (locals as any).lang = lang;
+
     const sessionId = cookies.get(AUTH_CONFIG.COOKIE_SESSION_NAME)?.value;
 
     (locals as any).user = null;

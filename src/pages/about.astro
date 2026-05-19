@@ -1,15 +1,17 @@
 ---
-export const prerender = true;
-
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
 ---
 
 <BaseLayout
   seoProps={{
-    title: 'Who we are',
-    description: 'Learn about Kukode, a community-driven index and platform for modern design and front-end development.',
+    title: t('about.title'),
+    description: t('about.desc'),
     url: '/about/',
   }}
 >
@@ -21,42 +23,31 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
           variant="displayLG"
           class="text-base-900 font-display font-thin max-"
         >
-          Who we are
+          {t('about.title')}
         </Text>
         <Wrapper variant="prose" class="mt-12">
           <p>
-            Kukode is a community-driven platform for designers, developers, and
-            creative professionals who take their craft seriously. It’s a place
-            to stay current — from design systems and typography to modern
-            front-end tools and workflows.
+            {t('about.p1')}
           </p>
 
           <p>
-            Beyond resources, Kukode functions as a living creative index.
-            Members share work, exchange ideas, and learn from real-world
-            experience. Curated collections, focused articles, tutorials, and
-            trend breakdowns are built to improve decision-making, not just
-            inspire it.
+            {t('about.p2')}
           </p>
 
           <p>
-            Good work doesn’t happen in isolation. Kukode is designed to connect
-            forward-thinking creatives, encourage critical thinking, and push
-            standards higher. Join the community and use it to sharpen your
-            skills, expand your perspective, and build better work.
+            {t('about.p3')}
           </p>
         </Wrapper>
         <div class="mt-12">
           <Text class="text-base-600 italic">
-            "Innovation is born from connection. Together, we create the future
-            of design."
+            {t('about.quote')}
           </Text>
           <Text
             tag="p"
             variant="textBase"
             class="text-base-900 mt-2 font-semibold"
           >
-            — Jordan Miller, Founder of Kukode
+            — {t('about.author')}
           </Text>
         </div>
       </Wrapper>

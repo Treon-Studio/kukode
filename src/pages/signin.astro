@@ -2,11 +2,15 @@
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
 // Read error/message from URL params (set by API endpoint)
 const errorMsg = Astro.url.searchParams.get('error');
 const successMsg = Astro.url.searchParams.get('message');
 const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
 ---
 
 <BaseLayout hideNav={true} hideFooter={true}>
@@ -18,11 +22,10 @@ const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
           variant="displayLG"
           class="text-base-900 font-display font-light"
         >
-          Sign in
+          {t('auth.signinTitle')}
         </Text>
         <Text tag="p" variant="textBase" class="text-base-600 mt-4">
-          Welcome back. Enter your email and password like you haven't forgotten
-          them for the 12th time this week.
+          {lang === 'en' ? 'Welcome back. Enter your email and password to log in.' : 'Selamat datang kembali. Masukkan email dan kata sandi untuk masuk.'}
         </Text>
       </div>
 
@@ -45,7 +48,7 @@ const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
         <div class="w-full">
           <div class="flex items-baseline justify-between mb-1">
             <label for="email" class="text-sm font-medium text-base-500"
-              >Email Address</label
+              >{t('auth.emailLabel')}</label
             >
           </div>
           <div class="relative z-0 focus-within:z-10">
@@ -54,7 +57,7 @@ const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
               name="email"
               type="email"
               required
-              placeholder="you@example.com"
+              placeholder={t('footer.emailPlaceholder')}
               class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
               inputmode="email"
             />
@@ -63,7 +66,7 @@ const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
         <div class="w-full">
           <div class="flex items-baseline justify-between mb-1">
             <label for="password" class="text-sm font-medium text-base-500"
-              >Password</label
+              >{t('auth.passwordLabel')}</label
             >
           </div>
           <div class="relative z-0 focus-within:z-10">
@@ -89,29 +92,27 @@ const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
             for="login-remember"
             class="ml-2 text-sm font-medium text-base-500"
           >
-            Remember me for 30 days
+            {lang === 'en' ? 'Remember me for 30 days' : 'Ingat saya selama 30 hari'}
           </label>
         </div>
         <div class="flex flex-col gap-2">
-          <Button size="base" variant="accent" type="submit">
-            Sign in with email
+          <Button size="base" variant="accent" type="submit" class="w-full justify-center">
+            {t('auth.signinButton')}
           </Button>
         </div>
       </form>
-
-
 
       <Text
         tag="p"
         variant="textXS"
         class="mt-4 font-medium text-center text-base-500"
       >
-        Dont' have an account?
+        {t('auth.noAccount')}
         <a
           href="/signup"
-          class="font-medium text-accent-500 hover:text-base-500"
+          class="font-medium text-accent-500 hover:text-base-500 ml-1"
         >
-          Sign up
+          {t('nav.signup')}
         </a>
       </Text>
     </div>

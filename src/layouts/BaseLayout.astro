@@ -3,6 +3,7 @@ import BaseHead from '@/components/fundations/head/BaseHead.astro';
 import Footer from '@/components/global/Footer.astro';
 import Navigation from '@/components/navigation/Navigation.astro';
 import Search from '@/components/sites/Search.astro';
+import { getLangFromLocals } from '@/i18n/utils';
 // Import global styles
 import '@/styles/global.css';
 
@@ -17,10 +18,11 @@ const {
   seoProps = {},
 } = Astro.props;
 const renderSearch = showSearch || hideSearch === false;
+const lang = getLangFromLocals(Astro.locals);
 ---
 
 <html
-  lang="en"
+  lang={lang}
   class="scroll-smooth selection:bg-accent-50 selection:text-accent-500"
 >
   <head>

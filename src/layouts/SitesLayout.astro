@@ -1,20 +1,29 @@
 ---
-// Retrieve all posts from the "posts" collection
+// Retrieve all posts from the "sites" collection
 import { getCollection } from 'astro:content';
 
 const alltools = await getCollection('sites');
 // Frontmatter
-const { frontmatter } = Astro.props;
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import { Image } from "astro:assets";
-import ArrowupRight from "@/components/fundations/icons/ArrowUpRight.astro";
-import SiteCard from "@/components/sites/SiteCard.astro";
+const { frontmatter, isDynamic = false } = Astro.props;
+
+import { Image } from 'astro:assets';
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import ArrowupRight from '@/components/fundations/icons/ArrowUpRight.astro';
+import Comments from '@/components/sites/Comments.astro';
+import SiteCard from '@/components/sites/SiteCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const seoProps = {
+  title: frontmatter.title,
+  description: frontmatter.description,
+  image: frontmatter.thumbnail?.url,
+  url: Astro.url.href,
+};
 ---
 
-<BaseLayout showSearch={true}>
+<BaseLayout showSearch={true} seoProps={seoProps}>
   <section>
     <Wrapper variant="standard" class="py-24">
       <div class="flex flex-wrap justify-between gap-4">
@@ -36,24 +45,33 @@ import SiteCard from "@/components/sites/SiteCard.astro";
           variant="default"
           href={frontmatter.live}
           title={frontmatter.title}
+          target="_blank"
         >
           <ArrowupRight slot="icon" class="size-4" />
         </Button>
       </div>
-      <div class="p-8 bg-base-50 rounded-lg mt-12">
-        <Image
-          width={1400}
-          height={1400}
-          loading="lazy"
-          decoding="async"
-          src={frontmatter.thumbnail.url}
-          alt={frontmatter.thumbnail.alt}
-          class="size-full aspect-8/5 object-top rounded shadow"
-        />
+      <div class="p-8 bg-base-50 rounded-lg mt-12 relative group">
+        {isDynamic ? (
+          <img
+            src={frontmatter.thumbnail.url}
+            alt={frontmatter.thumbnail.alt || frontmatter.title}
+            class="size-full aspect-8/5 object-top rounded shadow"
+          />
+        ) : (
+          <Image
+            width={1400}
+            height={1400}
+            loading="lazy"
+            decoding="async"
+            src={frontmatter.thumbnail.url}
+            alt={frontmatter.thumbnail.alt}
+            class="size-full aspect-8/5 object-top rounded shadow"
+          />
+        )}
       </div>
-      <dl class="mt-4 divide-y divide-base-100">
+      <dl class="mt-4 divide-y divide-base-100 mb-12">
         {
-          frontmatter.details.map((details) => (
+          frontmatter.details?.map((details: any) => (
             <div class="flex itmes-center gap-2 justify-between py-2">
               <dt>
                 <Text
@@ -73,8 +91,21 @@ import SiteCard from "@/components/sites/SiteCard.astro";
           ))
         }
       </dl>
+
+      {/* Content Slot for Markdown, or fallback description for Dynamic */}
+      <div class="prose prose-base text-base-600 mb-12">
+        <slot />
+        {isDynamic && !Astro.slots.has('default') && (
+          <p>{frontmatter.description}</p>
+        )}
+      </div>
+
+      {/* Comments Section */}
+      <hr class="border-base-100 my-12" />
+      <Comments siteId={frontmatter.id} />
     </Wrapper>
   </section>
+
   <section>
     <Wrapper variant="standard" class="py-24">
       <div class="flex flex-wrap gap-4 justify-between items-center">

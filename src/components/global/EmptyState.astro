@@ -1,0 +1,46 @@
+---
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  icon?: string; // e.g. ri-inbox-line
+  actionText?: string;
+  actionHref?: string;
+  class?: string;
+}
+
+const {
+  title = 'Belum Ada Data',
+  description = 'Sepertinya data yang Anda cari belum tersedia saat ini.',
+  icon = 'ri-folder-open-line',
+  actionText,
+  actionHref,
+  class: className = '',
+} = Astro.props;
+---
+
+<div class={`flex flex-col items-center justify-center text-center p-8 md:p-12 rounded-2xl bg-base-50/50 border border-base-200/60 backdrop-blur-sm shadow-sm transition duration-300 hover:border-base-300/80 ${className}`}>
+  <!-- Icon Wrapper with rich gradient glow -->
+  <div class="relative flex items-center justify-center size-14 rounded-2xl bg-white ring-1 ring-base-100 shadow-md mb-5 group">
+    <div class="absolute inset-0 rounded-2xl bg-gradient-to-tr from-accent-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition duration-300"></div>
+    <i class={`${icon} text-2xl text-base-400 group-hover:text-accent-500 transition-colors duration-300`}></i>
+  </div>
+
+  <Text tag="h3" variant="textBase" class="text-base-900 font-display font-medium">
+    {title}
+  </Text>
+  
+  <Text tag="p" variant="textXS" class="text-base-500 mt-2 max-w-sm text-balance">
+    {description}
+  </Text>
+
+  {actionText && actionHref && (
+    <div class="mt-6 animate-fade-in">
+      <Button isLink size="sm" variant="accent" href={actionHref}>
+        {actionText}
+      </Button>
+    </div>
+  )}
+</div>

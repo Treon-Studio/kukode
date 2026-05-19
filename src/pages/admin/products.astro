@@ -1,0 +1,293 @@
+---
+import { desc, eq, inArray } from 'drizzle-orm';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { profiles, submittedSites } from '@/db/schema';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/signin');
+}
+
+// Fetch pending sites
+const pendingSites = await db
+  .select({
+    id: submittedSites.id,
+    title: submittedSites.title,
+    tagline: submittedSites.tagline,
+    live_url: submittedSites.live_url,
+    thumbnail_url: submittedSites.thumbnail_url,
+    tags: submittedSites.tags,
+    created_at: submittedSites.created_at,
+    profiles: {
+      username: profiles.username,
+      full_name: profiles.full_name,
+    },
+  })
+  .from(submittedSites)
+  .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
+  .where(eq(submittedSites.status, 'pending_review'))
+  .orderBy(desc(submittedSites.created_at));
+
+// Fetch recently approved/rejected
+const recentSites = await db
+  .select({
+    id: submittedSites.id,
+    title: submittedSites.title,
+    status: submittedSites.status,
+    rejection_reason: submittedSites.rejection_reason,
+    created_at: submittedSites.created_at,
+  })
+  .from(submittedSites)
+  .where(inArray(submittedSites.status, ['approved', 'rejected']))
+  .orderBy(desc(submittedSites.created_at))
+  .limit(20);
+---
+
+<AdminLayout title="Product Moderation">
+  <div class="mb-8">
+    <Text tag="h2" variant="textLG" class="text-base-900 font-semibold mb-4">
+      Pending Review ({pendingSites?.length ?? 0})
+    </Text>
+
+    {(!pendingSites || pendingSites.length === 0) ? (
+      <div class="rounded-lg border border-base-200 p-8 text-center">
+        <Text tag="p" variant="textSM" class="text-base-500">
+          Tidak ada produk yang menunggu review. 🎉
+        </Text>
+      </div>
+    ) : (
+      <div class="space-y-4">
+        {pendingSites.map((site: any) => (
+          <div
+            class="rounded-lg border border-base-200 p-4 flex gap-4"
+            data-product-row={site.id}
+          >
+            {site.thumbnail_url && (
+              <img
+                src={site.thumbnail_url}
+                alt={site.title}
+                class="w-24 h-16 object-cover rounded-lg shrink-0 bg-base-100"
+              />
+            )}
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <Text tag="h3" variant="textSM" class="text-base-900 font-medium truncate">
+                  {site.title}
+                </Text>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Pending
+                </span>
+              </div>
+              <p class="text-xs text-base-500 mt-0.5">{site.tagline}</p>
+              <div class="flex items-center gap-3 mt-1">
+                <a
+                  href={site.live_url}
+                  target="_blank"
+                  rel="noopener"
+                  class="text-xs text-accent-600 hover:underline truncate"
+                >
+                  {site.live_url}
+                </a>
+                <span class="text-xs text-base-400">
+                  by @{site.profiles?.username || 'unknown'}
+                </span>
+                <span class="text-xs text-base-400">
+                  {new Date(site.created_at).toLocaleDateString('id-ID')}
+                </span>
+              </div>
+              {site.tags && site.tags.length > 0 && (
+                <div class="flex gap-1 mt-2 flex-wrap">
+                  {site.tags.map((tag: string) => (
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-base-100 text-base-600">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div class="flex items-start gap-2 shrink-0">
+              <button
+                type="button"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-500 transition-colors"
+                data-approve={site.id}
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors"
+                data-reject={site.id}
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Recent decisions */}
+  <div>
+    <Text tag="h2" variant="textLG" class="text-base-900 font-semibold mb-4">
+      Riwayat Keputusan
+    </Text>
+    {(!recentSites || recentSites.length === 0) ? (
+      <div class="rounded-lg border border-base-200 p-8 text-center">
+        <Text tag="p" variant="textSM" class="text-base-500">
+          Belum ada keputusan.
+        </Text>
+      </div>
+    ) : (
+      <div class="space-y-2">
+        {recentSites.map((site: any) => (
+          <div class="rounded-lg border border-base-100 p-3 flex items-center gap-3">
+            <span
+              class:list={[
+                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                site.status === 'approved'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800',
+              ]}
+            >
+              {site.status === 'approved' ? 'Approved' : 'Rejected'}
+            </span>
+            <span class="text-sm text-base-700 truncate flex-1">{site.title}</span>
+            {site.rejection_reason && (
+              <span class="text-xs text-red-500 truncate max-w-48" title={site.rejection_reason}>
+                {site.rejection_reason}
+              </span>
+            )}
+            <span class="text-xs text-base-400 shrink-0">
+              {new Date(site.created_at).toLocaleDateString('id-ID')}
+            </span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Reject modal */}
+  <div
+    id="reject-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50"
+  >
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
+      <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-4">
+        Alasan Penolakan
+      </Text>
+      <textarea
+        id="reject-reason"
+        rows="3"
+        placeholder="Tulis alasan penolakan..."
+        class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+      ></textarea>
+      <div class="flex justify-end gap-2 mt-4">
+        <button
+          type="button"
+          id="reject-cancel"
+          class="px-4 py-2 text-sm rounded-lg bg-base-100 text-base-700 hover:bg-base-200 transition-colors"
+        >
+          Batal
+        </button>
+        <button
+          type="button"
+          id="reject-confirm"
+          class="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors"
+        >
+          Tolak Produk
+        </button>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  (() => {
+    let pendingRejectId = null;
+    const modal = document.getElementById('reject-modal');
+    const reasonInput = document.getElementById('reject-reason');
+    const cancelBtn = document.getElementById('reject-cancel');
+    const confirmBtn = document.getElementById('reject-confirm');
+
+    // Approve handlers
+    document.querySelectorAll('[data-approve]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const siteId = btn.getAttribute('data-approve');
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        try {
+          const res = await fetch('/api/admin/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ site_id: siteId }),
+          });
+          if (!res.ok) throw new Error('Failed');
+
+          const row = document.querySelector(`[data-product-row="${siteId}"]`);
+          if (row) row.remove();
+        } catch {
+          btn.disabled = false;
+          btn.textContent = 'Approve';
+          alert('Gagal approve produk');
+        }
+      });
+    });
+
+    // Reject handlers — open modal
+    document.querySelectorAll('[data-reject]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        pendingRejectId = btn.getAttribute('data-reject');
+        if (modal) modal.classList.remove('hidden');
+        if (modal) modal.classList.add('flex');
+        if (reasonInput) reasonInput.value = '';
+        if (reasonInput) reasonInput.focus();
+      });
+    });
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        pendingRejectId = null;
+        if (modal) modal.classList.add('hidden');
+        if (modal) modal.classList.remove('flex');
+      });
+    }
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        const reason = reasonInput?.value?.trim();
+        if (!reason) {
+          alert('Alasan penolakan wajib diisi');
+          return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '...';
+
+        try {
+          const res = await fetch('/api/admin/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ site_id: pendingRejectId, reason }),
+          });
+          if (!res.ok) throw new Error('Failed');
+
+          const row = document.querySelector(`[data-product-row="${pendingRejectId}"]`);
+          if (row) row.remove();
+          if (modal) modal.classList.add('hidden');
+          if (modal) modal.classList.remove('flex');
+        } catch {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Tolak Produk';
+          alert('Gagal menolak produk');
+        }
+      });
+    }
+  })();
+</script>

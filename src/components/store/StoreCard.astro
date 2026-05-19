@@ -5,8 +5,9 @@ const { title, url, image, price } = {
   title: Astro.props.post.data.title,
   image: Astro.props.post.data.image.url,
 };
-import Text from "@/components/fundations/elements/Text.astro";
-import { Image } from "astro:assets";
+
+import { Image } from 'astro:assets';
+import Text from '@/components/fundations/elements/Text.astro';
 ---
 
 <article

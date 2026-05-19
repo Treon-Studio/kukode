@@ -1,0 +1,166 @@
+---
+import { and, eq, ne } from 'drizzle-orm';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { profiles } from '@/db/schema';
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import { APP_CONFIG } from '@/lib/constants';
+
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+
+// Handle form submission
+let successMsg = '';
+let errorMsg = '';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const fullName = formData.get('full_name')?.toString() || '';
+  const username = formData.get('username')?.toString() || '';
+  const bio = formData.get('bio')?.toString() || '';
+  const website = formData.get('website')?.toString() || '';
+  const twitter = formData.get('twitter')?.toString() || '';
+  const github = formData.get('github')?.toString() || '';
+
+  // Check username uniqueness (if changed)
+  if (username && username !== profile?.username) {
+    const [existing] = await db
+      .select({ id: profiles.id })
+      .from(profiles)
+      .where(and(eq(profiles.username, username), ne(profiles.id, user.id)))
+      .limit(1);
+
+    if (existing) {
+      errorMsg = 'Username sudah digunakan. Pilih username lain.';
+    }
+  }
+
+  if (!errorMsg) {
+    try {
+      await db
+        .update(profiles)
+        .set({
+          full_name: fullName,
+          username: username || profile?.username,
+          bio,
+          website,
+          twitter,
+          github,
+        })
+        .where(eq(profiles.id, user.id));
+
+      successMsg = 'Profil berhasil diperbarui!';
+    } catch (e: any) {
+      errorMsg = e.message || 'Gagal memperbarui profil.';
+    }
+  }
+}
+
+// Re-fetch profile after update
+const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
+---
+
+<DashboardLayout title="Settings">
+  {successMsg && (
+    <div class="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
+      {successMsg}
+    </div>
+  )}
+  {errorMsg && (
+    <div class="mb-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+      {errorMsg}
+    </div>
+  )}
+
+  <form method="POST" class="space-y-6 max-w-lg">
+    <div>
+      <label for="username" class="block text-sm font-medium text-base-700 mb-1">
+        Username
+      </label>
+      <input
+        id="username"
+        name="username"
+        type="text"
+        value={currentProfile?.username || ''}
+        class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+        placeholder="your-username"
+      />
+      <p class="text-xs text-base-400 mt-1">URL: {new URL(APP_CONFIG.BASE_URL).host}/u/{currentProfile?.username || 'username'}</p>
+    </div>
+
+    <div>
+      <label for="full_name" class="block text-sm font-medium text-base-700 mb-1">
+        Full Name
+      </label>
+      <input
+        id="full_name"
+        name="full_name"
+        type="text"
+        value={currentProfile?.full_name || ''}
+        class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+        placeholder="Budi Santoso"
+      />
+    </div>
+
+    <div>
+      <label for="bio" class="block text-sm font-medium text-base-700 mb-1">
+        Bio
+      </label>
+      <textarea
+        id="bio"
+        name="bio"
+        rows="3"
+        class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+        placeholder="Ceritakan sedikit tentang dirimu..."
+      >{currentProfile?.bio || ''}</textarea>
+    </div>
+
+    <div>
+      <label for="website" class="block text-sm font-medium text-base-700 mb-1">
+        Website
+      </label>
+      <input
+        id="website"
+        name="website"
+        type="url"
+        value={currentProfile?.website || ''}
+        class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+        placeholder="https://yoursite.com"
+      />
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="twitter" class="block text-sm font-medium text-base-700 mb-1">
+          Twitter/X
+        </label>
+        <input
+          id="twitter"
+          name="twitter"
+          type="text"
+          value={currentProfile?.twitter || ''}
+          class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+          placeholder="@username"
+        />
+      </div>
+      <div>
+        <label for="github" class="block text-sm font-medium text-base-700 mb-1">
+          GitHub
+        </label>
+        <input
+          id="github"
+          name="github"
+          type="text"
+          value={currentProfile?.github || ''}
+          class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+          placeholder="username"
+        />
+      </div>
+    </div>
+
+    <Button size="sm" variant="accent" type="submit">
+      Simpan Perubahan
+    </Button>
+  </form>
+</DashboardLayout>

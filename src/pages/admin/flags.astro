@@ -1,0 +1,126 @@
+---
+import { desc } from 'drizzle-orm';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { featureFlags } from '@/db/schema';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+
+const user = Astro.locals.user;
+const profile = Astro.locals.profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/signin');
+}
+
+const flags = await db.select().from(featureFlags).orderBy(desc(featureFlags.created_at));
+---
+
+<AdminLayout title="Feature Flags">
+  <Text tag="p" variant="textSM" class="text-base-500 mb-6">
+    Toggle feature flags to control feature availability. Changes take effect within 60 seconds (after cache TTL expires).
+  </Text>
+
+  {flags.length === 0 ? (
+    <div class="rounded-lg border border-base-200 p-8 text-center">
+      <Text tag="p" variant="textSM" class="text-base-500">
+        No feature flags found. Run the initial migration to seed flags.
+      </Text>
+    </div>
+  ) : (
+    <div class="space-y-3">
+      {flags.map((flag) => (
+        <div
+          class="rounded-lg border border-base-200 p-4 flex items-center justify-between gap-4"
+          data-flag-row={flag.name}
+        >
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <code class="text-sm font-mono font-medium text-base-900">
+                {flag.name}
+              </code>
+              <span
+                class:list={[
+                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                  flag.is_enabled
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800',
+                ]}
+                data-flag-badge={flag.name}
+              >
+                {flag.is_enabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+            <p class="text-xs text-base-500 mt-1">{flag.description}</p>
+            <div class="flex items-center gap-4 mt-2">
+              <span class="text-xs text-base-400">
+                Rollout: <strong class="text-base-600">{flag.rollout_percentage}%</strong>
+              </span>
+              <span class="text-xs text-base-400">
+                Env Override: <strong class="text-base-600">{flag.env_override ? 'Yes' : 'No'}</strong>
+              </span>
+              {flag.updated_at && (
+                <span class="text-xs text-base-400">
+                  Updated: {new Date(flag.updated_at).toLocaleDateString('id-ID')}
+                </span>
+              )}
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                checked={flag.is_enabled}
+                data-flag-toggle={flag.id}
+              />
+              <div class="w-11 h-6 bg-base-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-base-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600" />
+            </label>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>
+
+<script is:inline>
+  // Toggle handler for feature flags
+  document.querySelectorAll('[data-flag-toggle]').forEach((toggle) => {
+    toggle.addEventListener('change', async (e) => {
+      const flagId = toggle.getAttribute('data-flag-toggle');
+      const enabled = toggle.checked;
+
+      toggle.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/flags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'toggle', id: flagId }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to update flag');
+        }
+
+        const data = await res.json();
+        const flagName = data.data.name;
+
+        // Update badge
+        const badge = document.querySelector(`[data-flag-badge="${flagName}"]`);
+        if (badge) {
+          badge.textContent = enabled ? 'Enabled' : 'Disabled';
+          badge.className = enabled
+            ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'
+            : 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800';
+        }
+      } catch (err) {
+        // Revert toggle on error
+        toggle.checked = !enabled;
+        alert('Gagal mengubah flag: ' + err.message);
+      } finally {
+        toggle.disabled = false;
+      }
+    });
+  });
+</script>

@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 // Data
 const packages = [
   {
@@ -24,10 +25,11 @@ const packages = [
       'Secure ad space in our weekly newsletter. Reach a curated audience of designers and builders looking for production tools.',
   },
 ];
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
+
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 <BaseLayout>
   <section>

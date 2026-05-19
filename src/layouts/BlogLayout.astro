@@ -10,12 +10,13 @@ const allPostsUnsorted = await getCollection('posts');
 const allPosts = allPostsUnsorted.sort(
   (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
 );
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import BlogCard from "@/components/blog/BlogCard.astro";
-import { Image } from "astro:assets";
+
+import { Image } from 'astro:assets';
+import BlogCard from '@/components/blog/BlogCard.astro';
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>

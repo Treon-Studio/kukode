@@ -1,48 +1,140 @@
 ---
-// Content
 import { getCollection } from 'astro:content';
+import { desc, eq } from 'drizzle-orm';
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import SiteCard from '@/components/sites/SiteCard.astro';
+import SponsorCard from '@/components/sites/SponsorCard.astro';
+import { db } from '@/db';
+import { submittedSites, votes } from '@/db/schema';
 
-const alltools = await getCollection('sites');
+// 1. Fetch static tools
+const staticSites = await getCollection('sites');
+
+// 2. Fetch dynamic tools from Turso
+const user = (Astro.locals as any).user;
+
+const dbSites = await db
+  .select({
+    id: submittedSites.id,
+    title: submittedSites.title,
+    live_url: submittedSites.live_url,
+    thumbnail_url: submittedSites.thumbnail_url,
+    tags: submittedSites.tags,
+    created_at: submittedSites.created_at,
+  })
+  .from(submittedSites)
+  .where(eq(submittedSites.status, 'approved'))
+  .orderBy(desc(submittedSites.created_at));
+
+// Fetch votes for these sites
+const allDbVotes = await db.select().from(votes);
+
+const dynamicSites = (dbSites || []).map((site: any) => {
+  const siteVotes = allDbVotes.filter((v) => v.site_id === site.id);
+  return {
+    id: site.id,
+    isDynamic: true,
+    data: {
+      live: site.live_url,
+      title: site.title,
+      thumbnail: { url: site.thumbnail_url, alt: site.title },
+      tags: site.tags ? (typeof site.tags === 'string' ? JSON.parse(site.tags) : site.tags) : [],
+    },
+    voteCount: siteVotes.length,
+    voted: siteVotes.some((v: any) => v.user_id === user?.id) || false,
+    createdAt: site.created_at ? new Date(site.created_at).getTime() : 0,
+  };
+});
+
+// Sort dynamic sites by popularity (votes) or recent
+const filterTab = Astro.url.searchParams.get('tab') || 'terbaru';
+
+if (filterTab === 'populer') {
+  dynamicSites.sort((a, b) => b.voteCount - a.voteCount);
+} else {
+  // terbaru
+  dynamicSites.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// 3. Combine them (Dynamic first, then Static)
+const alltools = [...dynamicSites, ...staticSites];
+
 const allTags = [...new Set(alltools.flatMap((post) => post.data.tags || []))];
 const sortedTags = allTags.sort((a, b) => a.localeCompare(b));
 const initialVisible = 7;
 const step = initialVisible;
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import SiteCard from "@/components/sites/SiteCard.astro";
-import SponsorCard from "@/components/sites/SponsorCard.astro";
 ---
 
 <section data-sites-preview data-step={step} data-initial={initialVisible}>
   <Wrapper variant="standard" class="py-24">
-    <div
-      class=" relative flex snap-x snap-proximity gap-1 py-2 overflow-x-scroll scrollbar-hide"
-    >
-      {
-        sortedTags.map((tag) => (
-          <Button
-            isLink
-            size="xs"
-            variant="muted"
-            title={tag}
-            aria-label={tag}
-            href={`/sites/tags/${tag}`}
-            class="capitalize"
-          >
-            {tag}
-          </Button>
-        ))
-      }
+    <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+      {/* Tags Scroll */}
+      <div class="relative flex snap-x snap-proximity gap-1 py-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+        <Button
+          isLink
+          size="xs"
+          variant="muted"
+          href="/sites/tags"
+          class="capitalize shrink-0"
+        >
+          All Tags
+        </Button>
+        {
+          sortedTags.slice(0, 10).map((tag) => (
+            <Button
+              isLink
+              size="xs"
+              variant="muted"
+              title={tag}
+              aria-label={tag}
+              href={`/sites/tags/${tag}`}
+              class="capitalize shrink-0"
+            >
+              {tag}
+            </Button>
+          ))
+        }
+      </div>
+
+      {/* Filters (Terbaru / Populer) */}
+      <div class="flex items-center gap-2 bg-base-50 p-1 rounded-lg shrink-0">
+        <a
+          href="?tab=terbaru"
+          class:list={[
+            "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+            filterTab === 'terbaru' ? "bg-white text-base-900 shadow-sm" : "text-base-500 hover:text-base-900"
+          ]}
+        >
+          Terbaru
+        </a>
+        <a
+          href="?tab=populer"
+          class:list={[
+            "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+            filterTab === 'populer' ? "bg-white text-base-900 shadow-sm" : "text-base-500 hover:text-base-900"
+          ]}
+        >
+          Populer
+        </a>
+      </div>
     </div>
+
     <div
-      class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 mt-8"
+      class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4"
       data-sites-list
     >
       {
         alltools.map((post, i) => (
           <>
             <div data-site-card class={i >= initialVisible ? "hidden" : ""}>
-              <SiteCard key={`post-${i}`} post={post} />
+              <SiteCard 
+                key={`post-${i}`} 
+                post={post} 
+                siteId={post.isDynamic ? post.id : undefined}
+                voteCount={post.voteCount}
+                voted={post.voted}
+              />
             </div>
             {i === 2 && <SponsorCard key={`sponsor-${i}`} />}
           </>

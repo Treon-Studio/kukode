@@ -1,22 +1,90 @@
 ---
-// Get  all posts from the "sites"  collection, which returns an unsorted array of post objects
+// Get posts from "sites" collection, or Turso database
+
 import { getCollection, render } from 'astro:content';
-export async function getStaticPaths() {
-  const sites = await getCollection('sites');
-  const paths = sites.map((page) => {
-    return {
-      params: { slug: page.id },
-      props: { page },
-      trailingSlash: false,
-    };
-  });
-  return paths;
+import { eq, sql } from 'drizzle-orm';
+import { db } from '@/db';
+import { profiles, submittedSites } from '@/db/schema';
+import SitesLayout from '@/layouts/SitesLayout.astro';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/404');
 }
-const { page } = Astro.props;
-const { Content } = await render(page);
-import SitesLayout from "@/layouts/SitesLayout.astro";
+
+let frontmatter: any = null;
+let isDynamic = false;
+let ContentComp: any = null;
+
+// 1. Check static collection first
+const sites = await getCollection('sites');
+const staticPage = sites.find((page) => page.id === slug);
+
+if (staticPage) {
+  const { Content } = await render(staticPage);
+  ContentComp = Content;
+  frontmatter = { ...staticPage.data, id: staticPage.id };
+} else {
+  // 2. If not found, check Turso DB
+  const [dbSite] = await db
+    .select({
+      id: submittedSites.id,
+      title: submittedSites.title,
+      description: submittedSites.description,
+      live_url: submittedSites.live_url,
+      thumbnail_url: submittedSites.thumbnail_url,
+      tagline: submittedSites.tagline,
+      views_count: submittedSites.views_count,
+      created_at: submittedSites.created_at,
+      profiles: {
+        username: profiles.username,
+        full_name: profiles.full_name,
+      },
+    })
+    .from(submittedSites)
+    .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
+    .where(eq(submittedSites.id, slug))
+    .limit(1);
+
+  if (!dbSite) {
+    return Astro.redirect('/404');
+  }
+
+  isDynamic = true;
+
+  // 3. Update view count asynchronously (fire and forget)
+  db.update(submittedSites)
+    .set({ views_count: sql`${submittedSites.views_count} + 1` })
+    .where(eq(submittedSites.id, dbSite.id))
+    .then()
+    .catch();
+
+  // Map dynamic data to SitesLayout expected frontmatter
+  frontmatter = {
+    id: dbSite.id,
+    title: dbSite.title,
+    description: dbSite.description,
+    live: dbSite.live_url,
+    thumbnail: {
+      url: dbSite.thumbnail_url,
+      alt: dbSite.title,
+    },
+    details: [
+      { label: 'Maker', value: `@${dbSite.profiles?.username || 'unknown'}` },
+      { label: 'Tagline', value: dbSite.tagline },
+      { label: 'Views', value: `${(dbSite.views_count || 0) + 1} views` },
+      {
+        label: 'Submitted',
+        value: dbSite.created_at
+          ? new Date(dbSite.created_at).toLocaleDateString('id-ID')
+          : 'Unknown',
+      },
+    ],
+  };
+}
 ---
 
-<SitesLayout frontmatter={page.data}>
-  <Content />
+<SitesLayout frontmatter={frontmatter} isDynamic={isDynamic}>
+  {ContentComp && <ContentComp />}
 </SitesLayout>

@@ -1,0 +1,60 @@
+---
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const { title = 'Admin' } = Astro.props;
+
+const adminLinks = [
+  { href: '/admin', text: 'Overview' },
+  { href: '/admin/products', text: 'Products' },
+  { href: '/admin/flags', text: 'Feature Flags' },
+  { href: '/admin/reports', text: 'Reports' },
+  { href: '/admin/analytics', text: 'Analytics' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="py-24 lg:pt-48">
+      <div class="flex gap-8">
+        {/* Sidebar */}
+        <aside class="hidden lg:block w-56 shrink-0">
+          <Text tag="p" variant="textSM" class="font-semibold text-base-900 mb-4">
+            Admin Panel
+          </Text>
+          <nav class="flex flex-col gap-1">
+            {adminLinks.map((link) => (
+              <a
+                href={link.href}
+                class:list={[
+                  'text-sm px-3 py-2 rounded-lg transition-colors duration-200',
+                  currentPath === link.href
+                    ? 'bg-accent-50 text-accent-700 font-medium'
+                    : 'text-base-600 hover:bg-base-50 hover:text-base-900',
+                ]}
+              >
+                {link.text}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <div class="flex-1 min-w-0">
+          <Text
+            tag="h1"
+            variant="displaySM"
+            class="text-base-900 font-display font-light mb-8"
+          >
+            {title}
+          </Text>
+          <slot />
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

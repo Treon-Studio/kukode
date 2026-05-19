@@ -1,21 +1,35 @@
 ---
-import { AstroSeo } from "@lexingtonthemes/seo";
+import { AstroSeo } from '@lexingtonthemes/seo';
+
+import { APP_CONFIG } from '@/lib/constants';
+
+const { title, description, image, url } = Astro.props;
+
+const defaultTitle = 'Kukode';
+const defaultDesc = 'Kukode - Platform pengembangan web modern';
+const defaultImage = `${APP_CONFIG.BASE_URL}/og-image.jpg`;
+const defaultUrl = `${APP_CONFIG.BASE_URL}/`;
+
+const pageTitle = title ? `${title} | Kukode` : defaultTitle;
+const pageDesc = description || defaultDesc;
+const pageImage = image || defaultImage;
+const pageUrl = url || defaultUrl;
 ---
 
 <AstroSeo
-  title="Kukode"
-  description="Kukode - Platform pengembangan web modern"
-  canonical="https://kukode.treonstudio.com/"
+  title={pageTitle}
+  description={pageDesc}
+  canonical={pageUrl}
   openGraph={{
-    url: "https://kukode.treonstudio.com/",
-    title: "Kukode",
-    description: "Kukode - Platform pengembangan web modern",
+    url: pageUrl,
+    title: pageTitle,
+    description: pageDesc,
     images: [
       {
-        url: "https://kukode.treonstudio.com/og-image.jpg",
+        url: pageImage,
         width: 1200,
         height: 630,
-        alt: "Kukode",
+        alt: pageTitle,
         type: "image/jpeg",
       },
     ],

@@ -1,11 +1,13 @@
 ---
-import Seo from "./Seo.astro";
-import Meta from "./Meta.astro";
-import Fonts from "./Fonts.astro";
-import Favicons from "./Favicons.astro";
-import FuseJS from "@/components/fundations/scripts/FuseJS.astro";
+import FuseJS from '@/components/fundations/scripts/FuseJS.astro';
+import Favicons from './Favicons.astro';
+import Fonts from './Fonts.astro';
+import Meta from './Meta.astro';
+import Seo from './Seo.astro';
+
+const { seoProps = {} } = Astro.props;
 ---
-<Seo />
+<Seo {...seoProps} />
 <Meta />
 <Fonts />
 <Favicons />

@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 const plans = [
   {
     name: 'Free',
@@ -27,11 +28,12 @@ const plans = [
     ],
   },
 ];
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Faq from "@/components/global/Faq.astro";
+
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import Faq from '@/components/global/Faq.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>

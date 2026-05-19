@@ -7,7 +7,19 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**/*.astro", "**/*.js", "**/*.ts", "**/*.json", "**/*.mjs"]
+    "includes": [
+      "**/*.astro",
+      "**/*.js",
+      "**/*.ts",
+      "**/*.json",
+      "**/*.mjs",
+      "!dist",
+      "!**/dist",
+      "!.astro",
+      "!**/.astro",
+      "!.wrangler",
+      "!**/.wrangler"
+    ]
   },
   "formatter": {
     "enabled": true,

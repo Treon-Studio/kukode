@@ -1,0 +1,108 @@
+---
+import { and, eq, inArray, sql } from 'drizzle-orm';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import EmptyState from '@/components/global/EmptyState.astro';
+import { db } from '@/db';
+import { submittedSites, votes } from '@/db/schema';
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+
+// Fetch stats using Drizzle
+const [submittedCountResult] = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(submittedSites)
+  .where(eq(submittedSites.maker_id, user.id));
+const submittedCount = submittedCountResult.count;
+
+const [approvedCountResult] = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(submittedSites)
+  .where(and(eq(submittedSites.maker_id, user.id), eq(submittedSites.status, 'approved')));
+
+const approvedCount = approvedCountResult.count;
+
+const sites = await db
+  .select({ views_count: submittedSites.views_count, id: submittedSites.id })
+  .from(submittedSites)
+  .where(eq(submittedSites.maker_id, user.id));
+
+let totalViews = 0;
+let totalVotes = 0;
+
+if (sites && sites.length > 0) {
+  totalViews = sites.reduce((sum: number, site: any) => sum + (site.views_count || 0), 0);
+  const siteIds = sites.map((s: any) => s.id);
+  const [voteCountResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(votes)
+    .where(inArray(votes.site_id, siteIds));
+  totalVotes = voteCountResult.count || 0;
+}
+
+// Badge Logic
+let badge = null;
+if (approvedCount && approvedCount >= 5) {
+  badge = { label: 'Top Maker', class: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+} else if (approvedCount && approvedCount >= 3) {
+  badge = { label: 'Pro Maker', class: 'bg-purple-100 text-purple-800 border-purple-200' };
+} else if (approvedCount && approvedCount >= 1) {
+  badge = { label: 'Maker', class: 'bg-green-100 text-green-800 border-green-200' };
+}
+---
+
+<DashboardLayout title="Dashboard">
+  <div class="flex items-center gap-3 mb-8">
+    <Text tag="p" variant="textBase" class="text-base-600">
+      Selamat datang kembali, <strong class="text-base-900">{profile?.full_name || profile?.username || 'Maker'}</strong>!
+    </Text>
+    {badge && (
+      <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badge.class}`}>
+        {badge.label}
+      </span>
+    )}
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Produk Submitted
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        {submittedCount || 0}
+      </Text>
+      <Text tag="p" variant="textXS" class="text-base-400 mt-1">
+        {approvedCount || 0} Approved
+      </Text>
+    </div>
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Total Votes
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        {totalVotes}
+      </Text>
+    </div>
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Total Views
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        {totalViews}
+      </Text>
+    </div>
+  </div>
+
+  {(!submittedCount || submittedCount === 0) && (
+    <EmptyState
+      title="Belum ada produk yang disubmit"
+      description="Kamu belum mensubmit produk apa pun. Submit produk pertamamu sekarang untuk mendapatkan eksposur!"
+      icon="ri-rocket-line"
+      actionText="Submit Produk Pertama"
+      actionHref="/submit"
+    />
+  )}
+
+</DashboardLayout>

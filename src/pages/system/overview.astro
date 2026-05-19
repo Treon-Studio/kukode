@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 // Array with links to all pages
 const pages = [
   {
@@ -101,9 +102,10 @@ const modalIds = {
   editAccount: 'edit-account-modal',
   createAccount: 'create-account-modal',
 };
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
+
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>

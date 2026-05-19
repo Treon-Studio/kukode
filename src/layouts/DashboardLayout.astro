@@ -1,0 +1,77 @@
+---
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const { title = 'Dashboard' } = Astro.props;
+
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+
+const dashboardLinks = [
+  { href: '/dashboard', text: 'Overview' },
+  { href: '/dashboard/products', text: 'My Products' },
+  { href: '/dashboard/settings', text: 'Settings' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<BaseLayout>
+  <section>
+    <Wrapper variant="standard" class="py-24 lg:pt-48">
+      <div class="flex gap-8">
+        {/* Sidebar */}
+        <aside class="hidden lg:block w-56 shrink-0">
+          <div class="flex items-center gap-3 mb-6">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name || 'Avatar'}
+                class="size-10 rounded-full object-cover ring-1 ring-base-200"
+              />
+            ) : (
+              <div class="size-10 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-sm font-semibold ring-1 ring-base-200">
+                {(profile?.username || user?.email || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-base-900 truncate">
+                {profile?.full_name || profile?.username || 'User'}
+              </p>
+              <p class="text-xs text-base-500 truncate">@{profile?.username}</p>
+            </div>
+          </div>
+          <nav class="flex flex-col gap-1">
+            {dashboardLinks.map((link) => (
+              <a
+                href={link.href}
+                class:list={[
+                  'text-sm px-3 py-2 rounded-lg transition-colors duration-200',
+                  currentPath === link.href
+                    ? 'bg-accent-50 text-accent-700 font-medium'
+                    : 'text-base-600 hover:bg-base-50 hover:text-base-900',
+                ]}
+              >
+                {link.text}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main content */}
+        <div class="flex-1 min-w-0">
+          <Text
+            tag="h1"
+            variant="displaySM"
+            class="text-base-900 font-display font-light mb-8"
+          >
+            {title}
+          </Text>
+          <slot />
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 // Get all posts from the "legal" collection
 import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
@@ -14,7 +16,8 @@ export async function getStaticPaths() {
 }
 const { page } = Astro.props;
 const { Content } = await render(page);
-import LegalLayout from "@/layouts/LegalLayout.astro";
+
+import LegalLayout from '@/layouts/LegalLayout.astro';
 ---
 
 <LegalLayout frontmatter={page.data}> <Content /></LegalLayout>

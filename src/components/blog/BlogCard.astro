@@ -6,8 +6,9 @@ const { title, url, image, tags, pubDate } = {
   image: Astro.props.post.data.image.url,
   pubDate: Astro.props.post.data.pubDate.toString().slice(0, 10),
 };
-import Text from "@/components/fundations/elements/Text.astro";
-import { Image } from "astro:assets";
+
+import { Image } from 'astro:assets';
+import Text from '@/components/fundations/elements/Text.astro';
 ---
 
 <article

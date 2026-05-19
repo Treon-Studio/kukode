@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 // Get all posts from the "posts" collection
 import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
@@ -10,7 +12,8 @@ export async function getStaticPaths() {
 }
 const { entry } = Astro.props;
 const { Content } = await render(entry);
-import BlogLayout from "@/layouts/BlogLayout.astro";
+
+import BlogLayout from '@/layouts/BlogLayout.astro';
 ---
 
 <BlogLayout frontmatter={entry.data}>

@@ -1,4 +1,6 @@
 ---
+export const prerender = true;
+
 // Get all posts from the "store" collection
 import { getCollection, render } from 'astro:content';
 export async function getStaticPaths() {
@@ -14,7 +16,8 @@ export async function getStaticPaths() {
 }
 const { page } = Astro.props;
 const { Content } = await render(page);
-import StoreLayout from "@/layouts/StoreLayout.astro";
+
+import StoreLayout from '@/layouts/StoreLayout.astro';
 ---
 <StoreLayout frontmatter={page.data}>
   <Content />

@@ -1,0 +1,42 @@
+---
+import Text from '@/components/fundations/elements/Text.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Admin Overview">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Pending Review
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        —
+      </Text>
+      <Text tag="p" variant="textXS" class="text-base-400 mt-1">
+        Connected in Sprint 2
+      </Text>
+    </div>
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Approved Sites
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        —
+      </Text>
+      <Text tag="p" variant="textXS" class="text-base-400 mt-1">
+        Connected in Sprint 2
+      </Text>
+    </div>
+    <div class="rounded-lg border border-base-200 p-6">
+      <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
+        Total Users
+      </Text>
+      <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
+        —
+      </Text>
+      <Text tag="p" variant="textXS" class="text-base-400 mt-1">
+        Connected in Sprint 2
+      </Text>
+    </div>
+  </div>
+</AdminLayout>

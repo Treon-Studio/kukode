@@ -5,13 +5,14 @@ import { getCollection } from 'astro:content';
 const allstore = await getCollection('store');
 // Frontmatter
 const { frontmatter } = Astro.props;
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Checkout from "@/components/fundations/icons/Checkout.astro";
-import StoreCard from "@/components/store/StoreCard.astro";
-import { Image } from "astro:assets";
+
+import { Image } from 'astro:assets';
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import Checkout from '@/components/fundations/icons/Checkout.astro';
+import StoreCard from '@/components/store/StoreCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>

@@ -1,15 +1,45 @@
 ---
 // Content
 import { getCollection } from 'astro:content';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { submittedSites } from '@/db/schema';
 
+// 1. Static sites
 const allSites = await getCollection('sites');
-const posts = allSites.map((post) => ({
+let posts = allSites.map((post) => ({
   title: post.data.title,
   tagline: post.data.tagline,
   id: post.id,
+  isDynamic: false,
 }));
-import Command from "@/components/fundations/icons/Command.astro";
-import Close from "@/components/fundations/icons/Close.astro";
+
+// 2. Dynamic sites
+try {
+  const dbSites = await db
+    .select({
+      id: submittedSites.id,
+      title: submittedSites.title,
+      tagline: submittedSites.tagline,
+    })
+    .from(submittedSites)
+    .where(eq(submittedSites.status, 'approved'));
+
+  if (dbSites && dbSites.length > 0) {
+    const dynamicPosts = dbSites.map((site) => ({
+      title: site.title,
+      tagline: site.tagline,
+      id: site.id,
+      isDynamic: true,
+    }));
+    posts = [...dynamicPosts, ...posts];
+  }
+} catch (e) {
+  // Ignore if db is not configured during build
+}
+
+import Close from '@/components/fundations/icons/Close.astro';
+import Command from '@/components/fundations/icons/Command.astro';
 ---
 <div class="relative p-4">
   <div

@@ -1,8 +1,13 @@
 ---
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Button from "@/components/fundations/elements/Button.astro";
-import Logo from "@/components/global/Logo.astro";
-import Burger from "@/components/fundations/icons/Burger.astro";
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Burger from '@/components/fundations/icons/Burger.astro';
+import Logo from '@/components/global/Logo.astro';
+
+// Get user and profile from middleware
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+const isLoggedIn = !!user;
 
 const links = [
   { href: '/', text: 'Websites' },
@@ -50,16 +55,47 @@ const links = [
         }
       </div>
       <div class="mt-8 flex items-center gap-2">
-        <Button isLink size="xs" variant="muted" href="/signin" class="shrink-0"
-          >Sign in</Button
-        >
-        <Button
-          isLink
-          size="xs"
-          variant="default"
-          href="/signup"
-          class="shrink-0">Sign up</Button
-        >
+        {isLoggedIn ? (
+          <>
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.full_name || profile.username || 'Avatar'}
+                  class="size-8 rounded-full object-cover ring-1 ring-base-200 shrink-0"
+                />
+              ) : (
+                <div class="size-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200 shrink-0">
+                  {(profile?.username || user.email || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span class="text-sm font-medium text-base-900 truncate">
+                {profile?.full_name || profile?.username || 'User'}
+              </span>
+            </div>
+            <Button isLink size="xs" variant="muted" href="/dashboard" class="shrink-0">
+              Dashboard
+            </Button>
+            <form method="POST" action="/api/auth/signout">
+              <Button size="xs" variant="default" type="submit" class="shrink-0">
+                Sign out
+              </Button>
+            </form>
+          </>
+        ) : (
+          <>
+            <Button isLink size="xs" variant="muted" href="/signin" class="shrink-0"
+              >Sign in</Button
+            >
+            <Button
+              isLink
+              size="xs"
+              variant="default"
+              href="/signup"
+              class="shrink-0">Sign up</Button
+            >
+          </>
+        )}
       </div>
     </Wrapper>
   </div>

@@ -13,3 +13,9 @@ package-lock.json
 .DS_Store
 .vscode/
 .idea/
+
+# Local databases and cache
+local.db
+local.db-journal
+.wrangler/
+graphify-out/

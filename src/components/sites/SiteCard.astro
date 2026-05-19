@@ -1,33 +1,133 @@
 ---
 // Content
+const isDynamic = Astro.props.post.isDynamic;
 const { title, url, thumbnail, live } = {
-  url: '/sites/site/' + Astro.props.post.id,
+  url: isDynamic ? Astro.props.post.data.live : '/sites/site/' + Astro.props.post.id,
   live: Astro.props.post.data.live,
   title: Astro.props.post.data.title,
   thumbnail: Astro.props.post.data.thumbnail.url,
 };
-import Text from "@/components/fundations/elements/Text.astro";
-import { Image } from "astro:assets";
+
+import { Image } from 'astro:assets';
+import Text from '@/components/fundations/elements/Text.astro';
+
+// Optional: vote data passed from parent (for dynamic sites from Turso database)
+
+const { voteCount = 0, siteId = '', voted = false } = Astro.props;
 ---
 
 <div
-  class="group-hover:opacity-30 hover:opacity-100 peer hover:peer-hover:opacity-30 duration-300 group"
+  class="group-hover:opacity-30 hover:opacity-100 peer hover:peer-hover:opacity-30 duration-300 group flex flex-col h-full"
 >
-  <div class="relative p-8 bg-base-50 rounded-lg">
-    <Image
-      width="900"
-      height="900"
-      src={thumbnail}
-      alt={Astro.props.post.data.thumbnail.alt}
-      class="object-cover aspect-8/5 w-full object-top rounded shadow"
-    />
-    <a href={url} title={title}>
+  <div class="relative p-8 bg-base-50 rounded-lg flex-1">
+    {isDynamic ? (
+      <img
+        src={thumbnail}
+        alt={Astro.props.post.data.thumbnail.alt || title}
+        class="object-cover aspect-8/5 w-full object-top rounded shadow"
+        loading="lazy"
+      />
+    ) : (
+      <Image
+        width="900"
+        height="900"
+        src={thumbnail}
+        alt={Astro.props.post.data.thumbnail.alt || title}
+        class="object-cover aspect-8/5 w-full object-top rounded shadow"
+      />
+    )}
+    <a href={url} title={title} target={isDynamic ? "_blank" : "_self"} rel={isDynamic ? "noopener noreferrer" : ""}>
       <span class="absolute inset-0"></span>
     </a>
   </div>
   <div class="flex items-center mt-2 gap-2">
-    <Text tag="h3" variant="textSM" class="text-base-600 capitalize">
+    <Text tag="h3" variant="textSM" class="text-base-600 capitalize flex-1 min-w-0 truncate">
       {title}
     </Text>
+    {/* Upvote button */}
+    {isDynamic && (
+      <button
+        type="button"
+        class:list={[
+          'relative z-10 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 shrink-0',
+          'border hover:border-accent-300 hover:bg-accent-50',
+          voted
+            ? 'border-accent-300 bg-accent-50 text-accent-700'
+            : 'border-base-200 bg-white text-base-500 hover:text-accent-600',
+        ]}
+        data-vote-btn
+        data-site-id={siteId}
+        data-voted={voted ? 'true' : 'false'}
+        title={siteId ? 'Vote' : 'Vote (login required)'}
+      >
+        <svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span data-vote-count={siteId}>{voteCount}</span>
+      </button>
+    )}
   </div>
 </div>
+
+<script is:inline>
+  // Attach vote handlers (runs once per page)
+  if (!window.__kukodeVoteInit) {
+    window.__kukodeVoteInit = true;
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-vote-btn]');
+      if (!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const siteId = btn.dataset.siteId;
+      if (!siteId) return;
+
+      const countEl = btn.querySelector('[data-vote-count]');
+      const wasVoted = btn.dataset.voted === 'true';
+      const currentCount = parseInt(countEl?.textContent || '0', 10);
+
+      // Optimistic update
+      btn.dataset.voted = wasVoted ? 'false' : 'true';
+      if (countEl) countEl.textContent = wasVoted ? currentCount - 1 : currentCount + 1;
+
+      if (wasVoted) {
+        btn.classList.remove('border-accent-300', 'bg-accent-50', 'text-accent-700');
+        btn.classList.add('border-base-200', 'bg-white', 'text-base-500');
+      } else {
+        btn.classList.add('border-accent-300', 'bg-accent-50', 'text-accent-700');
+        btn.classList.remove('border-base-200', 'bg-white', 'text-base-500');
+      }
+
+      try {
+        const res = await fetch('/api/sites/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ site_id: siteId }),
+        });
+
+        const data = await res.json();
+
+        if (res.status === 401) {
+          // Revert and redirect to signin
+          btn.dataset.voted = wasVoted ? 'true' : 'false';
+          if (countEl) countEl.textContent = currentCount;
+          window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname);
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Vote failed');
+        }
+
+        // Sync with server response
+        btn.dataset.voted = data.voted ? 'true' : 'false';
+        if (countEl) countEl.textContent = data.vote_count;
+      } catch (err) {
+        // Revert on error
+        btn.dataset.voted = wasVoted ? 'true' : 'false';
+        if (countEl) countEl.textContent = currentCount;
+      }
+    });
+  }
+</script>

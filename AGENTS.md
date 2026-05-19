@@ -1,6 +1,7 @@
-# AGENTS.md — Carbon (Lexington Themes)
+# AGENTS.md — Kukode
 
-**Carbon** is a Lexington Themes Astro template for a **directory / showcase-style marketing site**: homepage highlights featured “sites” (with Fuse.js search), a magazine-style **blog**, a **digital product store**, and supporting pages (pricing, advertise, submit, sign-in/up, system styleguide). It fits **SaaS/marketing, template marketplaces, and curated listings**. Publisher: [Lexington Themes](https://lexingtonthemes.com/).
+**Kukode** is a premium Astro directory & showcase platform for modern web developer submissions and curated lists. Users can register accounts, submit products, vote (upvote), write comments, and view curated sites, integrated natively with Turso database and Cloudflare Workers.
+
 
 ## Tech stack
 

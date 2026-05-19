@@ -1,12 +1,15 @@
 ---
+export const prerender = true;
+
 // Get all posts from the "store" collection
 import { getCollection } from 'astro:content';
 
 const allProducts = await getCollection('store');
-import BaseLayout from "@/layouts/BaseLayout.astro";
-import Wrapper from "@/components/fundations/containers/Wrapper.astro";
-import Text from "@/components/fundations/elements/Text.astro";
-import StoreCard from "@/components/store/StoreCard.astro";
+
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import StoreCard from '@/components/store/StoreCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>

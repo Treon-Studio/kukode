@@ -7,7 +7,13 @@ import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: frontmatter.page,
+    description: frontmatter.description || `Legal terms: ${frontmatter.page} of Kukode.`,
+    url: `/legal/${Astro.params.slug}/`,
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="flex flex-col gap-12 lg:flex-row">

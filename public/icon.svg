@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="20" fill="#12131a"/>
+  <!-- Code bracket < -->
+  <path d="M 30 35 L 15 50 L 30 65" stroke="#00f2fe" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Code bracket > -->
+  <path d="M 70 35 L 85 50 L 70 65" stroke="#00f2fe" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Letter K in the middle with nodes -->
+  <path d="M 45 30 L 45 70" stroke="#4facfe" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M 60 30 L 45 50 L 60 70" stroke="#4facfe" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="45" cy="30" r="5" fill="#00f2fe"/>
+  <circle cx="45" cy="70" r="5" fill="#00f2fe"/>
+  <circle cx="60" cy="30" r="5" fill="#00f2fe"/>
+  <circle cx="60" cy="70" r="5" fill="#00f2fe"/>
+</svg>

@@ -28,7 +28,14 @@ import SiteCard from '@/components/sites/SiteCard.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout pageTitle={tag} showSearch={true}>
+<BaseLayout
+  showSearch={true}
+  seoProps={{
+    title: `Websites about ${tag}`,
+    description: `Explore the best real-world developer tools and websites built with ${tag}.`,
+    url: `/sites/tags/${tag}/`,
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <Text

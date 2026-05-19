@@ -15,7 +15,14 @@ import StoreCard from '@/components/store/StoreCard.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: frontmatter.title,
+    description: frontmatter.description,
+    image: frontmatter.image?.url,
+    url: `/store/${Astro.params.slug}/`,
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div>

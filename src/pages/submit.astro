@@ -7,7 +7,13 @@ import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: 'Submit Website',
+    description: 'Submit your website to Kukode and get feedback from top builders and creators.',
+    url: '/submit/',
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <Wrapper variant="narrow">

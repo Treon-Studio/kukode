@@ -19,7 +19,14 @@ import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: frontmatter.title,
+    description: frontmatter.description,
+    image: frontmatter.image?.url,
+    url: `/blog/posts/${Astro.params.slug}/`,
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-balance">

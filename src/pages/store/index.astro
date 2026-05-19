@@ -12,7 +12,13 @@ import StoreCard from '@/components/store/StoreCard.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: 'Templates & Products',
+    description: 'Shop our premium curation of digital developer products and HTML/Astro templates.',
+    url: '/store/',
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-balance max-w-xl text-center mx-auto">

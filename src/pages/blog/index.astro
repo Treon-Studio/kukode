@@ -18,7 +18,13 @@ import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: 'Magazine',
+    description: 'Read the latest updates, trends, and articles on web design and development.',
+    url: '/blog/',
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-balance max-w-xl">

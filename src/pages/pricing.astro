@@ -36,7 +36,13 @@ import Faq from '@/components/global/Faq.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: 'Pricing Plans',
+    description: 'Access the full library and use it like a pro. Choose a plan to unlock deeper filtering and unlimited collections.',
+    url: '/pricing/',
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-balance max-w-3xl mx-auto text-center">

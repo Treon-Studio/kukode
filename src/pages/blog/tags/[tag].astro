@@ -23,7 +23,13 @@ import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
 
-<BaseLayout pageTitle={tag}>
+<BaseLayout
+  seoProps={{
+    title: `Articles about ${tag}`,
+    description: `Browse all articles tagged with "${tag}" on Kukode.`,
+    url: `/blog/tags/${tag}/`,
+  }}
+>
   <section class="relative overflow-hidden">
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <Text

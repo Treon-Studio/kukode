@@ -31,7 +31,13 @@ import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 ---
-<BaseLayout>
+<BaseLayout
+  seoProps={{
+    title: 'Advertise',
+    description: 'Put your launch in front of the Carbon crowd. Reach designers and developers actively looking for production-grade inspiration.',
+    url: '/advertise/',
+  }}
+>
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-center max-w-3xl mx-auto text-balance">

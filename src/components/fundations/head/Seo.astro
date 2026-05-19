@@ -7,13 +7,28 @@ const { title, description, image, url } = Astro.props;
 
 const defaultTitle = 'Kukode';
 const defaultDesc = 'Kukode - Platform pengembangan web modern';
-const defaultImage = `${APP_CONFIG.BASE_URL}/og-image.jpg`;
-const defaultUrl = `${APP_CONFIG.BASE_URL}/`;
+const defaultImage = '/og-image.jpg';
+const defaultUrl = '/';
 
 const pageTitle = title ? `${title} | Kukode` : defaultTitle;
 const pageDesc = description || defaultDesc;
-const pageImage = image || defaultImage;
-const pageUrl = url || defaultUrl;
+
+let pageImage = defaultImage;
+if (image) {
+  if (typeof image === 'object' && image.src) {
+    pageImage = image.src;
+  } else if (typeof image === 'string') {
+    pageImage = image;
+  }
+}
+if (pageImage.startsWith('/')) {
+  pageImage = `${APP_CONFIG.BASE_URL}${pageImage}`;
+}
+
+let pageUrl = url || defaultUrl;
+if (pageUrl.startsWith('/')) {
+  pageUrl = `${APP_CONFIG.BASE_URL}${pageUrl}`;
+}
 ---
 
 <AstroSeo

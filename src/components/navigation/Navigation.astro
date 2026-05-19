@@ -23,24 +23,22 @@ const links = [
 ---
 
 <MobileNav />
-<nav class="fixed w-full top-0 z-20 bg-white py-4 hidden md:block">
+<nav class="fixed w-full top-0 z-20 backdrop-blur-md bg-white/80 border-b border-base-100 py-3.5 hidden md:block">
   <Wrapper variant="standard">
-    <div
-      class="grid grid-cols-2 md:grid-cols-2 items-center w-full gap-3 relative"
-    >
+    <div class="flex items-center justify-between w-full gap-6">
       <a
         href="/"
-        class="shrink-0 foucs:outline-none"
+        class="shrink-0 focus:outline-none group"
         aria-label="Go to homepage"
       >
-        <Logo class="h-4 text-base-900" />
+        <Logo class="text-base-900" />
       </a>
-      <div class="flex items-center gap-2 lg:gap-2 ml-auto">
-        <div class="flex items-center gap-4">
+      <div class="flex items-center gap-6 ml-auto">
+        <div class="flex items-center gap-6">
           {
             links.map((link) => (
               <a
-                class="text-base-600 hover:text-base-900 text-xs whitespace-nowrap"
+                class="text-base-600 hover:text-base-900 text-xs font-medium whitespace-nowrap transition-colors duration-200"
                 href={link.href}
               >
                 {link.text}

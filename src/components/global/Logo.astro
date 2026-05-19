@@ -1,12 +1,10 @@
 ---
-import Text from '@/components/fundations/elements/Text.astro';
+const { class: className = '', ...props } = Astro.props;
 ---
 
-<Text
-  tag="a"
-  href="/"
-  variant="textBase"
-  class="inline-flex items-center font-bold text-base-1300 uppercase gap-3 group-hover:opacity-80"
+<span
+  class={`inline-flex items-center font-bold text-base-900 dark:text-white uppercase tracking-wider text-sm gap-2 group-hover:opacity-80 ${className}`}
+  {...props}
 >
-  trendspotter
-</Text>
+  kukode
+</span>

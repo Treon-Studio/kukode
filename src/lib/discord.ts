@@ -37,7 +37,7 @@ export async function sendDiscordNotification(payload: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: 'Kukode Bot',
+        username: 'Tukang bot',
         avatar_url: NOTIFICATION_CONFIG.DISCORD_BOT_AVATAR, // Fallback bot avatar
         ...payload,
       }),

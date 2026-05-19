@@ -62,7 +62,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, newSession.id, {
       path: '/',
       httpOnly: true,
-      secure: true,
+      secure: import.meta.env.PROD,
       sameSite: 'lax',
       expires: new Date(expiresAt * 1000),
     });

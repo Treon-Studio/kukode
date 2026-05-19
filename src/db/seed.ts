@@ -90,11 +90,11 @@ async function main() {
     const sites = await db.insert(schema.submittedSites).values([
       {
         maker_id: makerUser.id,
-        title: "Carbon Theme",
+        title: "Kukode Theme",
         tagline: "Premium Astro template for modern design portfolios",
-        description: "Carbon is a clean, hyper-minimalist Astro template optimized for designers, software developers, and creators. Featuring rich typography, deep styling control, and seamless dynamic animations.",
-        live_url: "https://lexingtonthemes.com/templates/carbon",
-        thumbnail_url: "https://lexingtonthemes.com/templates/carbon/og-image.jpg",
+        description: "Kukode is a clean, hyper-minimalist Astro template optimized for designers, software developers, and creators. Featuring rich typography, deep styling control, and seamless dynamic animations.",
+        live_url: "https://treonstudio.com/templates/kukode",
+        thumbnail_url: "https://treonstudio.com/templates/kukode/og-image.jpg",
         tags: ["astro", "tailwind", "design"],
         status: "approved",
         views_count: 142,
@@ -137,7 +137,7 @@ async function main() {
       }
     ]).returning();
 
-    const carbonSite = sites.find(s => s.title === "Carbon Theme")!;
+    const carbonSite = sites.find(s => s.title === "Kukode Theme")!;
     const kukodeSite = sites.find(s => s.title === "Kukode Directory")!;
     const kukodeUiSite = sites.find(s => s.title === "Kukode UI Hub")!;
     console.log("✅ Seeded sites successfully.");
@@ -145,7 +145,7 @@ async function main() {
     // 5. Seed Votes
     console.log("👍 Seeding site upvotes...");
     await db.insert(schema.votes).values([
-      // Carbon Theme votes
+      // Kukode Theme votes
       { site_id: carbonSite.id, user_id: johnUser.id },
       { site_id: carbonSite.id, user_id: janeUser.id },
       { site_id: carbonSite.id, user_id: makerUser.id },

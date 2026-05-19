@@ -7,6 +7,10 @@ import SiteCard from '@/components/sites/SiteCard.astro';
 import SponsorCard from '@/components/sites/SponsorCard.astro';
 import { db } from '@/db';
 import { submittedSites, votes } from '@/db/schema';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
 
 // 1. Fetch static tools
 const staticSites = await getCollection('sites');
@@ -78,7 +82,7 @@ const step = initialVisible;
           href="/sites/tags"
           class="capitalize shrink-0"
         >
-          All Tags
+          {t('sites.allTags')}
         </Button>
         {
           sortedTags.slice(0, 10).map((tag) => (
@@ -106,7 +110,7 @@ const step = initialVisible;
             filterTab === 'terbaru' ? "bg-white text-base-900 shadow-sm" : "text-base-500 hover:text-base-900"
           ]}
         >
-          Terbaru
+          {t('sites.terbaru')}
         </a>
         <a
           href="?tab=populer"
@@ -115,7 +119,7 @@ const step = initialVisible;
             filterTab === 'populer' ? "bg-white text-base-900 shadow-sm" : "text-base-500 hover:text-base-900"
           ]}
         >
-          Populer
+          {t('sites.populer')}
         </a>
       </div>
     </div>
@@ -151,7 +155,7 @@ const step = initialVisible;
             data-sites-more
             class="px-6"
           >
-            Show more
+            {t('sites.showMore')}
           </Button>
         </div>
       )

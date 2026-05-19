@@ -6,6 +6,10 @@ import { db } from '@/db';
 import { profiles } from '@/db/schema';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 import { APP_CONFIG } from '@/lib/constants';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
 
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
@@ -32,7 +36,7 @@ if (Astro.request.method === 'POST') {
       .limit(1);
 
     if (existing) {
-      errorMsg = 'Username sudah digunakan. Pilih username lain.';
+      errorMsg = t('settings.usernameUsed');
     }
   }
 
@@ -50,9 +54,9 @@ if (Astro.request.method === 'POST') {
         })
         .where(eq(profiles.id, user.id));
 
-      successMsg = 'Profil berhasil diperbarui!';
+      successMsg = t('settings.successUpdate');
     } catch (e: any) {
-      errorMsg = e.message || 'Gagal memperbarui profil.';
+      errorMsg = e.message || t('settings.failUpdate');
     }
   }
 }
@@ -91,7 +95,7 @@ const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, 
 
     <div>
       <label for="full_name" class="block text-sm font-medium text-base-700 mb-1">
-        Full Name
+        {t('settings.fullName')}
       </label>
       <input
         id="full_name"
@@ -105,20 +109,20 @@ const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, 
 
     <div>
       <label for="bio" class="block text-sm font-medium text-base-700 mb-1">
-        Bio
+        {t('settings.bio')}
       </label>
       <textarea
         id="bio"
         name="bio"
         rows="3"
         class="block w-full px-4 py-2 text-sm bg-white border border-transparent rounded-lg text-base-700 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
-        placeholder="Ceritakan sedikit tentang dirimu..."
+        placeholder={t('settings.bioPlaceholder')}
       >{currentProfile?.bio || ''}</textarea>
     </div>
 
     <div>
       <label for="website" class="block text-sm font-medium text-base-700 mb-1">
-        Website
+        {t('settings.website')}
       </label>
       <input
         id="website"
@@ -160,7 +164,7 @@ const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, 
     </div>
 
     <Button size="sm" variant="accent" type="submit">
-      Simpan Perubahan
+      {t('settings.saveChanges')}
     </Button>
   </form>
 </DashboardLayout>

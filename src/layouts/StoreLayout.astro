@@ -13,6 +13,10 @@ import Text from '@/components/fundations/elements/Text.astro';
 import Checkout from '@/components/fundations/icons/Checkout.astro';
 import StoreCard from '@/components/store/StoreCard.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
 ---
 
 <BaseLayout
@@ -112,10 +116,10 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
         <Text
           tag="h2"
           variant="displaySM"
-          class="text-base-900 font-display font-thin">More products</Text
+          class="text-base-900 font-display font-thin">{t('store.moreProducts')}</Text
         >
         <Button isLink size="sm" variant="muted" href="/store/">
-          See all products
+          {t('store.seeAllProducts')}
         </Button>
       </div>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 mt-8">

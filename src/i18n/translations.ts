@@ -96,6 +96,53 @@ export const ui = {
     'submit.thumbLabel': 'Thumbnail URL',
     'submit.tagsLabel': 'Tags (comma separated)',
     'submit.button': 'Submit Product',
+
+    // Hero / Previews
+    'hero.titleLine1': 'No concepts.',
+    'hero.titleLine2': 'Just real websites.',
+    'hero.desc':
+      'A curated collection of production websites worth studying — layout, hierarchy, interaction, and execution. Use them to benchmark your own work, not to copy it.',
+    'sites.allTags': 'All Tags',
+    'sites.terbaru': 'Terbaru',
+    'sites.populer': 'Populer',
+    'sites.showMore': 'Show more',
+    'blog.latestArticles': 'Latest articles',
+    'blog.seeAllArticles': 'See all articles',
+    'blog.latestPosts': 'Latest posts',
+    'blog.seeAllPosts': 'See all posts',
+    'store.latestTemplates': 'Our latest templates',
+    'store.seeThemAll': 'See them all!',
+    'store.moreProducts': 'More products',
+    'store.seeAllProducts': 'See all products',
+
+    // Store Pages
+    'store.seoTitle': 'Templates & Products',
+    'store.seoDesc':
+      'Shop our premium curation of digital developer products and HTML/Astro templates.',
+    'store.title': 'Our products',
+    'store.desc':
+      'Shop my selection of digital products to help you grow your business, and to make your life easier and more productive',
+
+    // Dashboard
+    'dashboard.welcome': 'Welcome back,',
+    'dashboard.submitted': 'Submitted Products',
+    'dashboard.approved': 'Approved',
+    'dashboard.totalVotes': 'Total Votes',
+    'dashboard.totalViews': 'Total Views',
+    'dashboard.emptyTitle': 'No products submitted yet',
+    'dashboard.emptyDesc':
+      "You haven't submitted any products yet. Submit your first product now to get exposure!",
+    'dashboard.emptyAction': 'Submit First Product',
+
+    // Settings
+    'settings.usernameUsed': 'Username already taken. Choose another username.',
+    'settings.successUpdate': 'Profile updated successfully!',
+    'settings.failUpdate': 'Failed to update profile.',
+    'settings.bioPlaceholder': 'Tell us a little about yourself...',
+    'settings.saveChanges': 'Save Changes',
+    'settings.fullName': 'Full Name',
+    'settings.bio': 'Bio',
+    'settings.website': 'Website',
   },
   id: {
     // Navigation
@@ -188,5 +235,52 @@ export const ui = {
     'submit.thumbLabel': 'URL Miniatur',
     'submit.tagsLabel': 'Tag (pisahkan dengan koma)',
     'submit.button': 'Kirim Produk',
+
+    // Hero / Previews
+    'hero.titleLine1': 'Bukan konsep.',
+    'hero.titleLine2': 'Hanya situs web nyata.',
+    'hero.desc':
+      'Kumpulan situs web produksi pilihan yang layak dipelajari — tata letak, hierarki, interaksi, dan eksekusi. Gunakan untuk tolok ukur karya Anda, bukan menirunya.',
+    'sites.allTags': 'Semua Tag',
+    'sites.terbaru': 'Terbaru',
+    'sites.populer': 'Populer',
+    'sites.showMore': 'Tampilkan lebih banyak',
+    'blog.latestArticles': 'Artikel terbaru',
+    'blog.seeAllArticles': 'Lihat semua artikel',
+    'blog.latestPosts': 'Postingan terbaru',
+    'blog.seeAllPosts': 'Lihat semua postingan',
+    'store.latestTemplates': 'Templat terbaru kami',
+    'store.seeThemAll': 'Lihat semua!',
+    'store.moreProducts': 'Produk lainnya',
+    'store.seeAllProducts': 'Lihat semua produk',
+
+    // Store Pages
+    'store.seoTitle': 'Templat & Produk',
+    'store.seoDesc':
+      'Belanja pilihan templat HTML/Astro dan produk developer digital premium kami.',
+    'store.title': 'Produk kami',
+    'store.desc':
+      'Beli pilihan produk digital kami untuk membantu mengembangkan bisnis Anda dan membuat hidup Anda lebih mudah serta produktif',
+
+    // Dashboard
+    'dashboard.welcome': 'Selamat datang kembali,',
+    'dashboard.submitted': 'Produk Submitted',
+    'dashboard.approved': 'Disetujui',
+    'dashboard.totalVotes': 'Total Polling',
+    'dashboard.totalViews': 'Total Dilihat',
+    'dashboard.emptyTitle': 'Belum ada produk yang disubmit',
+    'dashboard.emptyDesc':
+      'Kamu belum mensubmit produk apa pun. Submit produk pertamamu sekarang untuk mendapatkan eksposur!',
+    'dashboard.emptyAction': 'Submit Produk Pertama',
+
+    // Settings
+    'settings.usernameUsed': 'Username sudah digunakan. Pilih username lain.',
+    'settings.successUpdate': 'Profil berhasil diperbarui!',
+    'settings.failUpdate': 'Gagal memperbarui profil.',
+    'settings.bioPlaceholder': 'Ceritakan sedikit tentang dirimu...',
+    'settings.saveChanges': 'Simpan Perubahan',
+    'settings.fullName': 'Nama Lengkap',
+    'settings.bio': 'Bio',
+    'settings.website': 'Situs Web',
   },
 } as const;

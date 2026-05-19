@@ -114,11 +114,11 @@ async function main() {
       },
       {
         maker_id: johnUser.id,
-        title: "Trendspotter UI",
+        title: "Kukode UI Hub",
         tagline: "Discover trending developer tools and CSS templates",
-        description: "Trendspotter collects the latest premium CSS stylesheets, HSL palettes, and typography presets. Easily export code snippets directly into your projects.",
-        live_url: "https://trendspotter.com",
-        thumbnail_url: "https://trendspotter.com/og-image.jpg",
+        description: "Kukode UI Hub collects the latest premium CSS stylesheets, HSL palettes, and typography presets. Easily export code snippets directly into your projects.",
+        live_url: "https://ui.kukode.com",
+        thumbnail_url: "https://ui.kukode.com/og-image.jpg",
         tags: ["development", "colors", "css"],
         status: "approved",
         views_count: 53,
@@ -139,7 +139,7 @@ async function main() {
 
     const carbonSite = sites.find(s => s.title === "Carbon Theme")!;
     const kukodeSite = sites.find(s => s.title === "Kukode Directory")!;
-    const trendspotterSite = sites.find(s => s.title === "Trendspotter UI")!;
+    const kukodeUiSite = sites.find(s => s.title === "Kukode UI Hub")!;
     console.log("✅ Seeded sites successfully.");
 
     // 5. Seed Votes
@@ -154,8 +154,8 @@ async function main() {
       { site_id: kukodeSite.id, user_id: johnUser.id },
       { site_id: kukodeSite.id, user_id: janeUser.id },
 
-      // Trendspotter UI votes
-      { site_id: trendspotterSite.id, user_id: janeUser.id }
+      // Kukode UI Hub votes
+      { site_id: kukodeUiSite.id, user_id: janeUser.id }
     ]);
     console.log("✅ Seeded votes successfully.");
 

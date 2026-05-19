@@ -21,7 +21,10 @@ export async function sendDiscordNotification(payload: {
   content?: string;
   embeds?: DiscordEmbed[];
 }) {
-  const webhookUrl = import.meta.env.DISCORD_WEBHOOK_URL;
+  const webhookUrl =
+    (typeof import.meta !== 'undefined' && import.meta.env
+      ? import.meta.env.DISCORD_WEBHOOK_URL
+      : undefined) || process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log('Discord webhook skipped: DISCORD_WEBHOOK_URL env not set.');
     return;

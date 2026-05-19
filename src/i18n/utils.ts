@@ -1,7 +1,7 @@
 import { ui, defaultLang } from './translations';
 
 export type SupportedLanguages = keyof typeof ui;
-export type TranslationKeys = keyof typeof ui[typeof defaultLang];
+export type TranslationKeys = keyof (typeof ui)[typeof defaultLang];
 
 /**
  * Returns the current active language from Astro.locals, falling back to defaultLang

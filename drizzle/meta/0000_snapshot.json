@@ -50,12 +50,8 @@
           "name": "comments_site_id_submitted_sites_id_fk",
           "tableFrom": "comments",
           "tableTo": "submitted_sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -63,12 +59,8 @@
           "name": "comments_user_id_profiles_id_fk",
           "tableFrom": "comments",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -152,9 +144,7 @@
       "indexes": {
         "feature_flags_name_unique": {
           "name": "feature_flags_name_unique",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": true
         }
       },
@@ -256,16 +246,12 @@
       "indexes": {
         "profiles_email_unique": {
           "name": "profiles_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "profiles_username_unique": {
           "name": "profiles_username_unique",
-          "columns": [
-            "username"
-          ],
+          "columns": ["username"],
           "isUnique": true
         }
       },
@@ -305,12 +291,8 @@
           "name": "sessions_user_id_profiles_id_fk",
           "tableFrom": "sessions",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -423,12 +405,8 @@
           "name": "submitted_sites_maker_id_profiles_id_fk",
           "tableFrom": "submitted_sites",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "maker_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["maker_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -476,12 +454,8 @@
           "name": "votes_site_id_submitted_sites_id_fk",
           "tableFrom": "votes",
           "tableTo": "submitted_sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -489,12 +463,8 @@
           "name": "votes_user_id_profiles_id_fk",
           "tableFrom": "votes",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -12,28 +12,57 @@ const t = useTranslations(lang);
 const plans = [
   {
     name: lang === 'en' ? 'Free' : 'Gratis',
-    description: lang === 'en' ? 'Get limited access to everything.' : 'Dapatkan akses terbatas untuk semua fitur.',
+    description:
+      lang === 'en'
+        ? 'Get limited access to everything.'
+        : 'Dapatkan akses terbatas untuk semua fitur.',
     priceStatic: '$0',
     buttonVariant: 'default',
     features: [
-      { label: lang === 'en' ? 'Bookmarks' : 'Bookmark', value: lang === 'en' ? 'Save up to 5 favorites' : 'Simpan hingga 5 favorit' },
-      { label: lang === 'en' ? 'Filters' : 'Filter', value: lang === 'en' ? 'Basic filters for quick scans' : 'Filter dasar untuk pencarian cepat' },
-      { label: lang === 'en' ? 'Email' : 'Email', value: lang === 'en' ? 'Weekly inspiration roundup' : 'Ringkasan inspirasi mingguan' },
-      { label: lang === 'en' ? 'Support' : 'Dukungan', value: lang === 'en' ? 'Community help' : 'Bantuan komunitas' },
+      {
+        label: lang === 'en' ? 'Bookmarks' : 'Bookmark',
+        value: lang === 'en' ? 'Save up to 5 favorites' : 'Simpan hingga 5 favorit',
+      },
+      {
+        label: lang === 'en' ? 'Filters' : 'Filter',
+        value:
+          lang === 'en' ? 'Basic filters for quick scans' : 'Filter dasar untuk pencarian cepat',
+      },
+      {
+        label: lang === 'en' ? 'Email' : 'Email',
+        value: lang === 'en' ? 'Weekly inspiration roundup' : 'Ringkasan inspirasi mingguan',
+      },
+      {
+        label: lang === 'en' ? 'Support' : 'Dukungan',
+        value: lang === 'en' ? 'Community help' : 'Bantuan komunitas',
+      },
     ],
   },
   {
     name: lang === 'en' ? 'Team' : 'Tim',
-    description: lang === 'en' ? 'Get full workspace access.' : 'Dapatkan akses penuh ke ruang kerja.',
+    description:
+      lang === 'en' ? 'Get full workspace access.' : 'Dapatkan akses penuh ke ruang kerja.',
     priceMonthly: '$9',
     priceAnnual: '$6',
     buttonVariant: 'accent',
     features: [
-      { label: lang === 'en' ? 'Bookmarks & collections' : 'Bookmark & koleksi', value: lang === 'en' ? 'Unlimited for teams' : 'Tanpa batas untuk tim' },
-      { label: lang === 'en' ? 'Filters & tags' : 'Filter & tag', value: lang === 'en' ? 'Advanced + saved searches' : 'Pencarian lanjutan + tersimpan' },
-      { label: lang === 'en' ? 'Workspace' : 'Ruang kerja', value: lang === 'en' ? 'Shared lists for teammates' : 'Daftar bersama untuk rekan tim' },
+      {
+        label: lang === 'en' ? 'Bookmarks & collections' : 'Bookmark & koleksi',
+        value: lang === 'en' ? 'Unlimited for teams' : 'Tanpa batas untuk tim',
+      },
+      {
+        label: lang === 'en' ? 'Filters & tags' : 'Filter & tag',
+        value: lang === 'en' ? 'Advanced + saved searches' : 'Pencarian lanjutan + tersimpan',
+      },
+      {
+        label: lang === 'en' ? 'Workspace' : 'Ruang kerja',
+        value: lang === 'en' ? 'Shared lists for teammates' : 'Daftar bersama untuk rekan tim',
+      },
       { label: lang === 'en' ? 'Exports' : 'Ekspor', value: 'CSV / Notion ready' },
-      { label: lang === 'en' ? 'Support' : 'Dukungan', value: lang === 'en' ? 'Priority replies' : 'Balasan prioritas' },
+      {
+        label: lang === 'en' ? 'Support' : 'Dukungan',
+        value: lang === 'en' ? 'Priority replies' : 'Balasan prioritas',
+      },
     ],
   },
 ];

@@ -9,6 +9,7 @@ package-lock.json
 .env
 .env.*
 !.env.example
+.dev.vars
 # OS and Editor
 .DS_Store
 .vscode/

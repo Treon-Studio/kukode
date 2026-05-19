@@ -6,11 +6,14 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare({
+  adapter: process.argv.includes('dev') ? undefined : cloudflare({
     imageService: 'passthrough',
   }),
   vite: {
     plugins: [tailwindcss()],
+    ssr: {
+      noExternal: ['@lexingtonthemes/seo'],
+    },
   },
   markdown: {
     drafts: true,

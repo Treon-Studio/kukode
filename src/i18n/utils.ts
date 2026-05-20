@@ -1,4 +1,4 @@
-import { ui, defaultLang } from './translations';
+import { defaultLang, ui } from './translations';
 
 export type SupportedLanguages = keyof typeof ui;
 export type TranslationKeys = keyof (typeof ui)[typeof defaultLang];

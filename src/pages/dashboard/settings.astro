@@ -3,10 +3,10 @@ import { and, eq, ne } from 'drizzle-orm';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import { db } from '@/db';
-import { profiles } from '@/db/schema';
+import { passkeys, profiles } from '@/db/schema';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 import { APP_CONFIG } from '@/lib/constants';
-import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
@@ -63,6 +63,15 @@ if (Astro.request.method === 'POST') {
 
 // Re-fetch profile after update
 const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
+
+// Fetch user's passkeys
+const userPasskeys = await db
+  .select({
+    id: passkeys.id,
+    created_at: passkeys.created_at,
+  })
+  .from(passkeys)
+  .where(eq(passkeys.user_id, user.id));
 ---
 
 <DashboardLayout title="Settings">
@@ -167,4 +176,155 @@ const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, 
       {t('settings.saveChanges')}
     </Button>
   </form>
+
+  <div class="mt-12 pt-8 border-t border-base-200 max-w-lg" data-lang={lang} id="passkeys-container">
+    <h3 class="text-lg font-semibold text-base-800 mb-2">Passkeys & Biometric Security</h3>
+    <p class="text-sm text-base-500 mb-6">
+      {lang === 'en' 
+        ? 'Passkeys allow you to sign in securely using your fingerprint, face scan, or device PIN, without typing a password.' 
+        : 'Passkey memungkinkan Anda masuk dengan aman menggunakan sidik jari, pemindai wajah, atau PIN perangkat, tanpa mengetik sandi.'}
+    </p>
+
+    <!-- Passkeys List -->
+    <div class="space-y-3 mb-6" id="passkeys-list">
+      {userPasskeys.length === 0 ? (
+        <div class="text-sm text-base-400 italic bg-base-50 rounded-lg p-4 border border-base-200">
+          {lang === 'en' ? 'No passkeys registered yet.' : 'Belum ada passkey yang terdaftar.'}
+        </div>
+      ) : (
+        userPasskeys.map((pk) => (
+          <div class="flex items-center justify-between bg-white border border-base-200 rounded-lg p-4 shadow-sm" id={`pk-${pk.id}`}>
+            <div>
+              <p class="text-sm font-semibold text-base-700">Passkey</p>
+              <p class="text-xs text-base-400">
+                {lang === 'en' ? 'Created on' : 'Dibuat pada'}{' '}
+                {new Date(pk.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
+                  dateStyle: 'medium',
+                })}
+              </p>
+            </div>
+            <button
+              class="delete-pk-btn text-xs text-red-600 hover:text-red-800 font-medium transition duration-200"
+              data-id={pk.id}
+            >
+              {lang === 'en' ? 'Remove' : 'Hapus'}
+            </button>
+          </div>
+        ))
+      )}
+    </div>
+
+    <button
+      id="register-passkey-btn"
+      class="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-base-800 text-white hover:bg-base-900 transition duration-200 focus:outline-none focus:ring-2 focus:ring-base-500 focus:ring-offset-2"
+    >
+      {lang === 'en' ? 'Register new passkey' : 'Daftarkan passkey baru'}
+    </button>
+    <p id="passkey-error" class="text-xs text-red-500 mt-2 hidden"></p>
+    <p id="passkey-success" class="text-xs text-green-600 mt-2 hidden"></p>
+  </div>
 </DashboardLayout>
+
+<script>
+  import 'webauthn-polyfills';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('passkeys-container');
+    const lang = container?.getAttribute('data-lang') || 'en';
+
+    const registerBtn = document.getElementById('register-passkey-btn');
+    const passkeyError = document.getElementById('passkey-error');
+    const passkeySuccess = document.getElementById('passkey-success');
+
+    if (registerBtn) {
+      registerBtn.addEventListener('click', async () => {
+        if (!passkeyError || !passkeySuccess) return;
+        passkeyError.classList.add('hidden');
+        passkeySuccess.classList.add('hidden');
+        (registerBtn as HTMLButtonElement).disabled = true;
+        const originalText = registerBtn.textContent;
+        registerBtn.textContent = lang === 'en' ? 'Generating options...' : 'Membuat opsi...';
+
+        try {
+          // 1. Fetch registration options from server
+          const optionsRes = await fetch('/api/auth/passkey/register-options');
+          if (!optionsRes.ok) {
+            const errData = await optionsRes.json();
+            throw new Error(errData.error || 'Failed to fetch options');
+          }
+          const options = await optionsRes.json();
+
+          registerBtn.textContent = lang === 'en' ? 'Waiting for authenticator...' : 'Menunggu autentikator...';
+
+          // 2. Call browser WebAuthn API
+          const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(options);
+          const credential = await navigator.credentials.create({
+            publicKey,
+          });
+
+          if (!credential) {
+            throw new Error(lang === 'en' ? 'Failed to create credential' : 'Gagal membuat kredensial');
+          }
+
+          registerBtn.textContent = lang === 'en' ? 'Verifying...' : 'Memverifikasi...';
+
+          // 3. Send response back to server for verification
+          const verifyRes = await fetch('/api/auth/passkey/register-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify((credential as any).toJSON()),
+          });
+
+          if (!verifyRes.ok) {
+            const errData = await verifyRes.json();
+            throw new Error(errData.error || 'Verification failed');
+          }
+
+          passkeySuccess.textContent = lang === 'en' ? 'Passkey registered successfully! Refreshing...' : 'Passkey berhasil didaftarkan! Menyegarkan...';
+          passkeySuccess.classList.remove('hidden');
+          setTimeout(() => window.location.reload(), 1500);
+        } catch (err: any) {
+          console.error(err);
+          passkeyError.textContent = err.message || (lang === 'en' ? 'Registration failed' : 'Registrasi gagal');
+          passkeyError.classList.remove('hidden');
+          (registerBtn as HTMLButtonElement).disabled = false;
+          registerBtn.textContent = originalText;
+        }
+      });
+    }
+
+    // Handle delete buttons
+    const deleteBtns = document.querySelectorAll('.delete-pk-btn');
+    deleteBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm(lang === 'en' ? 'Are you sure you want to remove this passkey?' : 'Apakah Anda yakin ingin menghapus passkey ini?')) {
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/auth/passkey/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passkey_id: id }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'Failed to remove');
+          }
+
+          const element = document.getElementById(`pk-${id}`);
+          if (element) element.remove();
+          
+          const list = document.getElementById('passkeys-list');
+          if (list && list.children.length === 0) {
+            window.location.reload();
+          }
+        } catch (err: any) {
+          alert(err.message);
+        }
+      });
+    });
+  });
+</script>

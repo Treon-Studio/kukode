@@ -1,8 +1,8 @@
 ---
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 
 // Read error from URL params (set by API endpoint)
 const errorMsg = Astro.url.searchParams.get('error');

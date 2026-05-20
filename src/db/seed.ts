@@ -1,6 +1,6 @@
 import { createClient } from '@libsql/client/web';
-import { drizzle } from 'drizzle-orm/libsql';
 import * as dotenv from 'dotenv';
+import { drizzle } from 'drizzle-orm/libsql';
 import { hashPassword } from '@/lib/auth-crypto';
 import * as schema from './schema';
 

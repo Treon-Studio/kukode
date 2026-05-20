@@ -12,8 +12,8 @@ import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import Checkout from '@/components/fundations/icons/Checkout.astro';
 import StoreCard from '@/components/store/StoreCard.astro';
-import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import BaseLayout from '@/layouts/BaseLayout.astro';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);

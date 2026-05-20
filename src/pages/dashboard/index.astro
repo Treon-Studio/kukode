@@ -5,8 +5,8 @@ import Text from '@/components/fundations/elements/Text.astro';
 import EmptyState from '@/components/global/EmptyState.astro';
 import { db } from '@/db';
 import { submittedSites, votes } from '@/db/schema';
-import DashboardLayout from '@/layouts/DashboardLayout.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);

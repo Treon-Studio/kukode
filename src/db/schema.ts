@@ -89,3 +89,17 @@ export const featureFlags = sqliteTable('feature_flags', {
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
   updated_at: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
+
+export const passkeys = sqliteTable('passkeys', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  user_id: text('user_id')
+    .references(() => profiles.id, { onDelete: 'cascade' })
+    .notNull(),
+  credential_id: text('credential_id').unique().notNull(),
+  public_key: text('public_key').notNull(),
+  counter: integer('counter').default(0).notNull(),
+  transports: text('transports'), // comma-separated list of transport strings
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});

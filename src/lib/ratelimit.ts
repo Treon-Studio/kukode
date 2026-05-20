@@ -1,5 +1,5 @@
-import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 // Map of route paths or groups to their respective rate limit configurations
 const limiters: Record<string, { limit: number; window: string }> = {

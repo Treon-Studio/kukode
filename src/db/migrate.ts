@@ -1,9 +1,9 @@
-import { migrate } from 'drizzle-orm/libsql/migrator';
-import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client/web';
 import * as dotenv from 'dotenv';
-import { sendDiscordNotification } from '../lib/discord';
+import { drizzle } from 'drizzle-orm/libsql';
+import { migrate } from 'drizzle-orm/libsql/migrator';
 import { NOTIFICATION_CONFIG } from '../lib/constants';
+import { sendDiscordNotification } from '../lib/discord';
 
 dotenv.config();
 

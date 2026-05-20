@@ -2,8 +2,8 @@
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Logo from '@/components/global/Logo.astro';
-import MobileNav from './MobileNav.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import MobileNav from './MobileNav.astro';
 
 // Get user and profile from middleware (Astro.locals)
 const user = (Astro.locals as any).user;

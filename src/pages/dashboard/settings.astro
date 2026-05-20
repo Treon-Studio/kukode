@@ -7,8 +7,9 @@ import { db } from '@/db';
 import { passkeys, profiles } from '@/db/schema';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
+import { Effect } from 'effect';
 import { APP_CONFIG } from '@/lib/constants';
-import { getStorageAdapter } from '@/lib/storage';
+import { StorageAdapter, runStorageEffect } from '@/lib/storage';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
@@ -46,9 +47,11 @@ if (Astro.request.method === 'POST') {
   let newAvatarUrl = profile?.avatar_url;
   if (!errorMsg && avatarFile && avatarFile.size > 0) {
     try {
-      const storage = getStorageAdapter(Astro.locals);
-      const { url } = await storage.uploadFile(avatarFile, 'avatars');
-      newAvatarUrl = url;
+      const uploadEffect = StorageAdapter.pipe(
+        Effect.flatMap((storage) => storage.uploadFile(avatarFile, 'avatars'))
+      );
+      const result = await runStorageEffect(uploadEffect, Astro.locals);
+      newAvatarUrl = result.url;
     } catch (e: any) {
       errorMsg = e.message || 'Gagal mengupload avatar';
     }
@@ -268,6 +271,8 @@ const userPasskeys = await db
 
 <script>
   import 'webauthn-polyfills';
+  import { FileLifecycleStateMachine } from '@/lib/storage/state-machine';
+  import { getLangFromLocals } from '@/i18n/utils';
 
   document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('passkeys-container');
@@ -367,5 +372,43 @@ const userPasskeys = await db
         }
       });
     });
+
+    // Profile avatar input handling using FileLifecycleStateMachine
+    const avatarInput = document.getElementById('avatar_file') as HTMLInputElement | null;
+    const settingsForm = document.querySelector('form') as HTMLFormElement | null;
+    const saveBtn = settingsForm?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+
+    if (avatarInput && settingsForm && saveBtn) {
+      const uploaderMachine = new FileLifecycleStateMachine();
+      const originalSaveText = saveBtn.textContent;
+
+      uploaderMachine.subscribe((state) => {
+        switch (state._tag) {
+          case 'Idle':
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalSaveText;
+            break;
+          case 'Uploading':
+            saveBtn.disabled = true;
+            saveBtn.textContent = lang === 'en' ? 'Uploading Avatar...' : 'Mengunggah Avatar...';
+            break;
+          case 'Uploaded':
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalSaveText;
+            break;
+          case 'Failure':
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalSaveText;
+            alert(state.error);
+            break;
+        }
+      });
+
+      settingsForm.addEventListener('submit', () => {
+        if (avatarInput.files && avatarInput.files.length > 0) {
+          uploaderMachine.transition({ _tag: 'StartUpload' });
+        }
+      });
+    }
   });
 </script>

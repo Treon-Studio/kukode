@@ -1,34 +1,45 @@
-import type { StorageAdapter } from '../types';
+import { Effect, Layer } from 'effect';
+import { StorageAdapter } from '../types';
 
-export class CloudflareR2StorageAdapter implements StorageAdapter {
-  private bucket: any;
-  private publicUrl: string;
+export const makeCloudflareR2StorageAdapter = (bucket: any, publicUrl: string) =>
+  StorageAdapter.of({
+    uploadFile: (file, folder = 'uploads') =>
+      Effect.tryPromise({
+        try: async () => {
+          const extension = file.name.split('.').pop() || 'bin';
+          const key = `${folder}/${crypto.randomUUID()}.${extension}`;
+          const arrayBuffer = await file.arrayBuffer();
 
-  constructor(bucket: any, publicUrl: string) {
-    this.bucket = bucket;
-    this.publicUrl = publicUrl;
-  }
+          await bucket.put(key, arrayBuffer, {
+            httpMetadata: {
+              contentType: file.type,
+            },
+          });
 
-  async uploadFile(file: File, folder: string = 'uploads'): Promise<{ url: string; key: string }> {
-    const extension = file.name.split('.').pop() || 'bin';
-    const key = `${folder}/${crypto.randomUUID()}.${extension}`;
-    const arrayBuffer = await file.arrayBuffer();
+          const baseUrl = publicUrl.replace(/\/$/, '');
+          const url = baseUrl ? `${baseUrl}/${key}` : `/${key}`;
 
-    // Put file into Cloudflare R2 bucket
-    await this.bucket.put(key, arrayBuffer, {
-      httpMetadata: {
-        contentType: file.type,
-      },
-    });
+          return { url, key };
+        },
+        catch: (error) => ({
+          _tag: 'StorageError' as const,
+          message: 'Failed to upload file to Cloudflare R2 bucket',
+          error,
+        }),
+      }),
 
-    // Generate public URL
-    const baseUrl = this.publicUrl.replace(/\/$/, '');
-    const url = baseUrl ? `${baseUrl}/${key}` : `/${key}`;
+    deleteFile: (key) =>
+      Effect.tryPromise({
+        try: async () => {
+          await bucket.delete(key);
+        },
+        catch: (error) => ({
+          _tag: 'StorageError' as const,
+          message: `Failed to delete file from Cloudflare R2: ${key}`,
+          error,
+        }),
+      }),
+  });
 
-    return { url, key };
-  }
-
-  async deleteFile(key: string): Promise<void> {
-    await this.bucket.delete(key);
-  }
-}
+export const CloudflareR2StorageAdapterLive = (bucket: any, publicUrl: string) =>
+  Layer.succeed(StorageAdapter, makeCloudflareR2StorageAdapter(bucket, publicUrl));

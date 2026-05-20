@@ -1,15 +1,18 @@
-export interface StorageAdapter {
-  /**
-   * Uploads a File to the designated storage provider.
-   * @param file The file to upload.
-   * @param folder Optional directory or prefix for organization (e.g. 'avatars', 'sites').
-   * @returns An object containing the public URL and the storage file key.
-   */
-  uploadFile(file: File, folder?: string): Promise<{ url: string; key: string }>;
+import { Context, Effect } from 'effect';
 
-  /**
-   * Deletes a file from the storage provider by its key.
-   * @param key The file identifier key.
-   */
-  deleteFile(key: string): Promise<void>;
+export interface StorageError {
+  readonly _tag: 'StorageError';
+  readonly message: string;
+  readonly error: unknown;
 }
+
+export interface StorageAdapter {
+  readonly uploadFile: (
+    file: File,
+    folder?: string
+  ) => Effect.Effect<{ readonly url: string; readonly key: string }, StorageError>;
+
+  readonly deleteFile: (key: string) => Effect.Effect<void, StorageError>;
+}
+
+export const StorageAdapter = Context.GenericTag<StorageAdapter>('@services/StorageAdapter');

@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
 import { eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import { db } from '@/db';
 import { profiles as profilesTable, submittedSites } from '@/db/schema';
 import { APP_CONFIG, NOTIFICATION_CONFIG } from '@/lib/constants';
 import { notifyProjectSubmission } from '@/lib/discord';
 import { isEnabled } from '@/lib/flags';
-import { getStorageAdapter } from '@/lib/storage';
+import { StorageAdapter, runStorageEffect } from '@/lib/storage';
 
 export const prerender = false;
 
@@ -69,9 +70,11 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     // Process file upload if provided
     let finalThumbnailUrl = thumbnailUrl || null;
     if (thumbnailFile && thumbnailFile.size > 0) {
-      const storage = getStorageAdapter(locals);
-      const { url } = await storage.uploadFile(thumbnailFile, 'sites');
-      finalThumbnailUrl = url;
+      const uploadEffect = StorageAdapter.pipe(
+        Effect.flatMap((storage) => storage.uploadFile(thumbnailFile, 'sites'))
+      );
+      const result = await runStorageEffect(uploadEffect, locals);
+      finalThumbnailUrl = result.url;
     }
 
     // Auto-approve logic (controlled by feature flag)

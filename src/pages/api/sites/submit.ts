@@ -5,6 +5,7 @@ import { profiles as profilesTable, submittedSites } from '@/db/schema';
 import { APP_CONFIG, NOTIFICATION_CONFIG } from '@/lib/constants';
 import { notifyProjectSubmission } from '@/lib/discord';
 import { isEnabled } from '@/lib/flags';
+import { getStorageAdapter } from '@/lib/storage';
 
 export const prerender = false;
 
@@ -28,10 +29,15 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     const description = formData.get('description')?.toString()?.trim();
     const tagsRaw = formData.get('tags')?.toString()?.trim();
     const thumbnailUrl = formData.get('thumbnail_url')?.toString()?.trim();
+    const thumbnailFile = formData.get('thumbnail_file') as File | null;
 
     // Validation
     if (!title || !tagline || !liveUrl || !description) {
       return redirect('/submit?error=Semua+field+wajib+diisi', 302);
+    }
+
+    if ((!thumbnailUrl || thumbnailUrl === '') && (!thumbnailFile || thumbnailFile.size === 0)) {
+      return redirect('/submit?error=Thumbnail+produk+wajib+diisi', 302);
     }
 
     if (tagline.length > 60) {
@@ -60,12 +66,20 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       );
     }
 
+    // Process file upload if provided
+    let finalThumbnailUrl = thumbnailUrl || null;
+    if (thumbnailFile && thumbnailFile.size > 0) {
+      const storage = getStorageAdapter(locals);
+      const { url } = await storage.uploadFile(thumbnailFile, 'sites');
+      finalThumbnailUrl = url;
+    }
+
     // Auto-approve logic (controlled by feature flag)
     let status = 'pending_review';
     let approvedAt: string | null = null;
     const autoApproveEnabled = await isEnabled('auto_approve', { userId: user.id });
 
-    if (autoApproveEnabled && thumbnailUrl) {
+    if (autoApproveEnabled && finalThumbnailUrl) {
       // Validate live URL returns HTTP 200
       try {
         const liveCheck = await fetch(liveUrl, {
@@ -90,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
         tagline,
         description,
         live_url: liveUrl,
-        thumbnail_url: thumbnailUrl || null,
+        thumbnail_url: finalThumbnailUrl,
         tags,
         status,
         approved_at: approvedAt,
@@ -139,7 +153,7 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
         title,
         tagline,
         liveUrl,
-        thumbnailUrl,
+        thumbnailUrl: finalThumbnailUrl,
         tags,
         makerUsername: profile?.username || user.email || 'anonymous',
       },

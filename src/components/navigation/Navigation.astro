@@ -2,7 +2,9 @@
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Logo from '@/components/global/Logo.astro';
+import UserAvatar from '@/components/global/UserAvatar.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import { NAVIGATION_LINKS } from '@/lib/constants';
 import MobileNav from './MobileNav.astro';
 
 // Get user and profile from middleware (Astro.locals)
@@ -13,18 +15,11 @@ const isLoggedIn = !!user;
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
 
-// Quick access links
-const links = [
-  { href: '/system/overview', text: t('nav.overview') },
-  { href: '/', text: t('nav.websites') },
-  { href: '/leaderboard/', text: t('nav.leaderboard') },
-  { href: '/pricing/', text: t('nav.pricing') },
-  { href: '/blog/', text: t('nav.blog') },
-  { href: '/store/', text: t('nav.store') },
-  { href: '/submit/', text: t('nav.submit') },
-  { href: '/advertise/', text: t('nav.sponsors') },
-  { href: 'https://treonstudio.com/templates/kukode', text: t('nav.buyKukode') },
-];
+// Centralized navigation links mapped with translation helper
+const links = NAVIGATION_LINKS.map(link => ({
+  href: link.href,
+  text: t(link.translationKey)
+}));
 ---
 
 <MobileNav />
@@ -99,17 +94,12 @@ const links = [
               aria-haspopup="menu"
               aria-label={profile?.username || user.email || 'User menu'}
             >
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt=""
-                  class="size-8 rounded-full object-cover ring-1 ring-base-200"
-                />
-              ) : (
-                <div class="size-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200" aria-hidden="true">
-                  {(profile?.username || user.email || 'U').charAt(0).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                avatarUrl={profile?.avatar_url}
+                username={profile?.username}
+                email={user.email}
+                class="size-8"
+              />
             </button>
             <div
               class="hidden absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg ring-1 ring-base-200 py-1 z-50"

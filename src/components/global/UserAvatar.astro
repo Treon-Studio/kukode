@@ -1,0 +1,23 @@
+---
+interface Props {
+  avatarUrl?: string | null;
+  username?: string | null;
+  email?: string | null;
+  class?: string;
+}
+
+const { avatarUrl, username, email, class: className = 'size-8' } = Astro.props;
+const displayLetter = (username || email || 'U').charAt(0).toUpperCase();
+---
+
+{avatarUrl ? (
+  <img
+    src={avatarUrl}
+    alt={username || 'Avatar'}
+    class={`rounded-full object-cover ring-1 ring-base-200 ${className}`}
+  />
+) : (
+  <div class={`rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200 ${className}`}>
+    {displayLetter}
+  </div>
+)}

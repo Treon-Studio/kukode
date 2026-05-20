@@ -3,6 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import EmptyState from '@/components/global/EmptyState.astro';
+import UserAvatar from '@/components/global/UserAvatar.astro';
 import { db } from '@/db';
 import { comments, profiles } from '@/db/schema';
 
@@ -57,17 +58,12 @@ const successMsg = Astro.url.searchParams.get('message');
 
         <div class="flex gap-4">
           <div class="shrink-0 mt-1">
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt={profile.full_name || 'Avatar'}
-                class="size-8 rounded-full object-cover ring-1 ring-base-200"
-              />
-            ) : (
-              <div class="size-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200">
-                {(profile?.username || user.email || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              avatarUrl={profile?.avatar_url}
+              username={profile?.username}
+              email={user.email}
+              class="size-8"
+            />
           </div>
           <div class="flex-1 min-w-0">
             <textarea
@@ -110,17 +106,11 @@ const successMsg = Astro.url.searchParams.get('message');
       dbComments.map((comment: any) => (
         <div class="flex gap-4">
           <div class="shrink-0 mt-1">
-            {comment.profiles?.avatar_url ? (
-              <img
-                src={comment.profiles.avatar_url}
-                alt={comment.profiles.full_name || 'Avatar'}
-                class="size-8 rounded-full object-cover ring-1 ring-base-200"
-              />
-            ) : (
-              <div class="size-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200">
-                {(comment.profiles?.username || 'U').charAt(0).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              avatarUrl={comment.profiles?.avatar_url}
+              username={comment.profiles?.username}
+              class="size-8"
+            />
           </div>
           <div class="flex-1 min-w-0 bg-base-50 rounded-lg p-4">
             <div class="flex items-center gap-2 mb-1 justify-between">

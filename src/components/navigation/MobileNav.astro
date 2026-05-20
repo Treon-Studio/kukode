@@ -3,7 +3,9 @@ import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Burger from '@/components/fundations/icons/Burger.astro';
 import Logo from '@/components/global/Logo.astro';
+import UserAvatar from '@/components/global/UserAvatar.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import { NAVIGATION_LINKS } from '@/lib/constants';
 
 // Get user and profile from middleware
 const user = (Astro.locals as any).user;
@@ -13,17 +15,11 @@ const isLoggedIn = !!user;
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
 
-const links = [
-  { href: '/', text: t('nav.websites') },
-  { href: '/leaderboard/', text: t('nav.leaderboard') },
-  { href: '/pricing/', text: t('nav.pricing') },
-  { href: '/blog/', text: t('nav.blog') },
-  { href: '/store/', text: t('nav.store') },
-  { href: '/submit/', text: t('nav.submit') },
-  { href: '/advertise/', text: t('nav.sponsors') },
-  { href: '/system/overview', text: t('nav.overview') },
-  { href: 'https://treonstudio.com/templates/kukode', text: t('nav.buyKukode') },
-];
+// Centralized navigation links mapped with translation helper
+const links = NAVIGATION_LINKS.map(link => ({
+  href: link.href,
+  text: t(link.translationKey)
+}));
 ---
 
 <nav class="fixed inset-x-0 top-0 z-40 backdrop-blur-md bg-white/80 border-b border-base-100 md:hidden">
@@ -83,17 +79,12 @@ const links = [
         {isLoggedIn ? (
           <>
             <div class="flex items-center gap-3 flex-1 min-w-0">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name || profile.username || 'Avatar'}
-                  class="size-8 rounded-full object-cover ring-1 ring-base-200 shrink-0"
-                />
-              ) : (
-                <div class="size-8 rounded-full bg-accent-100 text-accent-600 flex items-center justify-center text-xs font-semibold ring-1 ring-base-200 shrink-0">
-                  {(profile?.username || user.email || 'U').charAt(0).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                avatarUrl={profile?.avatar_url}
+                username={profile?.username}
+                email={user.email}
+                class="size-8 shrink-0"
+              />
               <span class="text-sm font-medium text-base-900 truncate">
                 {profile?.full_name || profile?.username || 'User'}
               </span>

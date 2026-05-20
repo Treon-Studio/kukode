@@ -29,7 +29,7 @@ const t = useTranslations(lang);
 
       {/* Error message */}
       {errorMsg && (
-        <div class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+        <div class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert">
           {errorMsg}
         </div>
       )}
@@ -132,7 +132,7 @@ const t = useTranslations(lang);
           </div>
         </div>
 
-        <div id="local-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800"></div>
+        <div id="local-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert"></div>
 
         <div class="flex flex-col gap-2 pt-2">
           <Button size="base" variant="accent" type="submit" id="submit-btn" class="w-full justify-center">
@@ -179,6 +179,7 @@ const t = useTranslations(lang);
         const btn = document.getElementById('submit-btn');
         if (btn) {
           btn.setAttribute('disabled', 'true');
+          btn.setAttribute('aria-busy', 'true');
           btn.textContent = lang === 'en' ? 'Creating Account...' : 'Membuat Akun...';
         }
       });

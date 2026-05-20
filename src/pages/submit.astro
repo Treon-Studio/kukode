@@ -164,10 +164,10 @@ const t = useTranslations(lang);
     const msgContainer = document.getElementById('submit-messages');
 
     if (error && msgContainer) {
-      msgContainer.innerHTML = `<div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">${error}</div>`;
+      msgContainer.innerHTML = `<div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert">${error}</div>`;
     }
     if (message && msgContainer) {
-      msgContainer.innerHTML = `<div class="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">${message}</div>`;
+      msgContainer.innerHTML = `<div class="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800" role="status">${message}</div>`;
     }
 
     // Form submitting indicator
@@ -177,6 +177,7 @@ const t = useTranslations(lang);
         const btn = document.getElementById('submit-btn');
         if (btn) {
           btn.setAttribute('disabled', 'true');
+          btn.setAttribute('aria-busy', 'true');
           btn.textContent = lang === 'en' ? 'Submitting...' : 'Mengirim...';
         }
       });

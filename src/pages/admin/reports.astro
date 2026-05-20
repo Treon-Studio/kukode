@@ -1,0 +1,202 @@
+---
+import { aliasedTable, desc, eq } from 'drizzle-orm';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { comments, profiles, reports, submittedSites } from '@/db/schema';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/signin');
+}
+
+// Aliases to join profiles table twice
+const authors = aliasedTable(profiles, 'authors');
+const reporters = aliasedTable(profiles, 'reporters');
+
+// Fetch pending reports
+const pendingReports = await db
+  .select({
+    id: reports.id,
+    reason: reports.reason,
+    created_at: reports.created_at,
+    comment: {
+      id: comments.id,
+      content: comments.content,
+    },
+    site: {
+      id: submittedSites.id,
+      title: submittedSites.title,
+    },
+    author: {
+      username: authors.username,
+      full_name: authors.full_name,
+    },
+    reporter: {
+      username: reporters.username,
+      full_name: reporters.full_name,
+    },
+  })
+  .from(reports)
+  .innerJoin(comments, eq(reports.comment_id, comments.id))
+  .innerJoin(submittedSites, eq(comments.site_id, submittedSites.id))
+  .innerJoin(authors, eq(comments.user_id, authors.id))
+  .innerJoin(reporters, eq(reports.reporter_id, reporters.id))
+  .where(eq(reports.status, 'pending'))
+  .orderBy(desc(reports.created_at));
+---
+
+<AdminLayout title="Comment Moderation">
+  <div class="mb-6">
+    <Text tag="p" variant="textSM" class="text-base-600">
+      Moderate reported comments and maintain platform guidelines.
+    </Text>
+  </div>
+
+  {(!pendingReports || pendingReports.length === 0) ? (
+    <div class="rounded-xl border border-base-200 p-12 text-center bg-white">
+      <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-100">
+        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-1">
+        All Clean!
+      </Text>
+      <Text tag="p" variant="textSM" class="text-base-500 max-w-sm mx-auto">
+        No comments are currently flagged for review. Excellent work!
+      </Text>
+    </div>
+  ) : (
+    <div class="space-y-4">
+      {pendingReports.map((report: any) => (
+        <div
+          class="rounded-xl border border-base-200 bg-white p-5 shadow-sm flex flex-col md:flex-row gap-5 justify-between items-start md:items-center"
+          data-report-row={report.id}
+        >
+          <div class="flex-1 min-w-0 space-y-2.5">
+            {/* Header info */}
+            <div class="flex items-center gap-2 flex-wrap text-xs text-base-500">
+              <span class="font-semibold text-base-900">
+                Flagged in
+              </span>
+              <a
+                href={`/sites/site/${report.site.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-accent-600 hover:underline font-medium"
+              >
+                {report.site.title}
+              </a>
+              <span>•</span>
+              <span>
+                Reported by <strong class="text-base-800">@{report.reporter.username}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                {new Date(report.created_at).toLocaleDateString('id-ID', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
+
+            {/* Comment block */}
+            <div class="p-3.5 bg-base-50 rounded-lg border border-base-100 text-sm">
+              <div class="flex items-center gap-1.5 mb-1.5 text-xs text-base-400 font-medium">
+                <span class="text-base-700">@{report.author.username}</span>
+                <span>says:</span>
+              </div>
+              <p class="text-base-700 italic font-mono text-xs">
+                "{report.comment.content}"
+              </p>
+            </div>
+
+            {/* Report Reason */}
+            <div class="text-xs text-red-600 bg-red-50/50 border border-red-100/50 px-2.5 py-1.5 rounded flex items-start gap-1.5">
+              <svg class="size-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>
+                <strong>Reason:</strong> {report.reason}
+              </span>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div class="flex gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0">
+            <button
+              type="button"
+              class="flex-1 md:flex-initial px-3.5 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+              data-action="delete"
+              data-report-id={report.id}
+            >
+              Delete Comment
+            </button>
+            <button
+              type="button"
+              class="flex-1 md:flex-initial px-3.5 py-2 text-xs font-semibold rounded-lg bg-base-100 text-base-700 hover:bg-base-200 transition-colors border border-base-200 focus:outline-none focus:ring-2 focus:ring-base-500 cursor-pointer"
+              data-action="dismiss"
+              data-report-id={report.id}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>
+
+<script is:inline>
+  (() => {
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const reportId = btn.dataset.reportId;
+      if (!action || !reportId) return;
+
+      const confirmMsg = action === 'delete' 
+        ? 'Are you sure you want to delete this comment? This cannot be undone.'
+        : 'Are you sure you want to dismiss this report?';
+      
+      if (!confirm(confirmMsg)) return;
+
+      // Disable buttons
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = '...';
+
+      try {
+        const res = await fetch('/api/admin/reports/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ report_id: reportId, action }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+
+        // Remove row
+        const row = document.querySelector(`[data-report-row="${reportId}"]`);
+        if (row) row.remove();
+
+        // Check if list empty, refresh page if so to show clean state
+        const remainingRows = document.querySelectorAll('[data-report-row]');
+        if (remainingRows.length === 0) {
+          window.location.reload();
+        }
+      } catch (err) {
+        alert(err.message || 'Operation failed');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+  })();
+</script>

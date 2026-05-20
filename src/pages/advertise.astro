@@ -13,6 +13,7 @@ const packages = [
   {
     name: t('adv.pkg1Name'),
     price: t('adv.pkg1Price'),
+    slug: 'article',
     features: [
       {
         label: lang === 'en' ? 'Homepage placement' : 'Penempatan beranda',
@@ -29,6 +30,7 @@ const packages = [
   {
     name: t('adv.pkg2Name'),
     price: t('adv.pkg2Price'),
+    slug: 'newsletter',
     features: [
       { label: lang === 'en' ? 'Audience' : 'Audiens', value: '7,800+ subscribers' },
       {
@@ -108,7 +110,7 @@ const packages = [
                 size="base"
                 variant="default"
                 isLink={true}
-                href="/signin"
+                href={`/api/advertise/create-invoice?pkg=${pkg.slug}`}
                 class="w-fit mt-8"
               >
                 {t('pricing.choosePlan')}

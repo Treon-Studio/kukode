@@ -1,0 +1,215 @@
+---
+import { desc, eq, gt, sql } from 'drizzle-orm';
+import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { profiles, submittedSites, votes } from '@/db/schema';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+
+const filter = Astro.url.searchParams.get('filter') || 'weekly';
+
+// Calculate threshold date
+let dateThreshold: Date | null = null;
+if (filter === 'weekly') {
+  dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+} else if (filter === 'monthly') {
+  dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+}
+
+// 1. Fetch approved sites
+const approvedSites = await db
+  .select({
+    id: submittedSites.id,
+    title: submittedSites.title,
+    tagline: submittedSites.tagline,
+    live_url: submittedSites.live_url,
+    thumbnail_url: submittedSites.thumbnail_url,
+    maker_username: profiles.username,
+  })
+  .from(submittedSites)
+  .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
+  .where(eq(submittedSites.status, 'approved'));
+
+// 2. Fetch votes count in range
+let votesQuery = db
+  .select({
+    site_id: votes.site_id,
+    count: sql<number>`count(*)`.as('vote_count'),
+  })
+  .from(votes);
+
+if (dateThreshold) {
+  votesQuery = votesQuery.where(gt(votes.created_at, dateThreshold)) as any;
+}
+
+const voteCounts = await votesQuery.groupBy(votes.site_id);
+
+// 3. Map votes to sites and sort
+const rankedSites = approvedSites
+  .map((site) => {
+    const voteInfo = voteCounts.find((v) => v.site_id === site.id);
+    return {
+      ...site,
+      voteCount: voteInfo ? voteInfo.count : 0,
+    };
+  })
+  .sort((a, b) => b.voteCount - a.voteCount);
+---
+
+<BaseLayout
+  seoProps={{
+    title: lang === 'en' ? 'Leaderboard' : 'Papan Peringkat',
+    description: lang === 'en' 
+      ? 'Top voted sites on Kukode.' 
+      : 'Situs web terpopuler dengan upvote terbanyak di Kukode.',
+    url: '/leaderboard/',
+  }}
+>
+  <section class="py-24 lg:pt-48">
+    <Wrapper variant="standard">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <Text tag="h1" variant="displayMD" class="text-base-900 font-display font-light">
+          {lang === 'en' ? 'Leaderboard' : 'Papan Peringkat'}
+        </Text>
+        <Text tag="p" variant="textBase" class="text-base-600 mt-3">
+          {lang === 'en' 
+            ? 'Discover the most upvoted sites built by the developer community.' 
+            : 'Temukan produk-produk paling populer yang dikurasi oleh komunitas pengembang.'}
+        </Text>
+
+        {/* Time Filters */}
+        <div class="inline-flex items-center gap-1.5 bg-base-50 p-1.5 rounded-xl border border-base-200 mt-8">
+          <a
+            href="?filter=weekly"
+            class:list={[
+              'px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200',
+              filter === 'weekly'
+                ? 'bg-white text-base-900 shadow-sm border border-base-200/50'
+                : 'text-base-500 hover:text-base-900',
+            ]}
+          >
+            {lang === 'en' ? 'Weekly' : 'Mingguan'}
+          </a>
+          <a
+            href="?filter=monthly"
+            class:list={[
+              'px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200',
+              filter === 'monthly'
+                ? 'bg-white text-base-900 shadow-sm border border-base-200/50'
+                : 'text-base-500 hover:text-base-900',
+            ]}
+          >
+            {lang === 'en' ? 'Monthly' : 'Bulanan'}
+          </a>
+          <a
+            href="?filter=all"
+            class:list={[
+              'px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200',
+              filter === 'all'
+                ? 'bg-white text-base-900 shadow-sm border border-base-200/50'
+                : 'text-base-500 hover:text-base-900',
+            ]}
+          >
+            {lang === 'en' ? 'All-Time' : 'Sepanjang Masa'}
+          </a>
+        </div>
+      </div>
+
+      <div class="max-w-3xl mx-auto bg-white border border-base-200 rounded-3xl overflow-hidden shadow-sm">
+        {(!rankedSites || rankedSites.length === 0) ? (
+          <div class="p-16 text-center text-base-500">
+            {lang === 'en' ? 'No products have been upvoted yet.' : 'Belum ada produk yang mendapatkan upvote.'}
+          </div>
+        ) : (
+          <div class="divide-y divide-base-100">
+            {rankedSites.map((site, index) => {
+              const rank = index + 1;
+              return (
+                <div class="p-5 flex items-center gap-4 sm:gap-6 hover:bg-base-50/50 transition-colors duration-150">
+                  {/* Rank Badge */}
+                  <div class="w-10 shrink-0 flex items-center justify-center font-display font-semibold text-lg">
+                    {rank === 1 && (
+                      <span class="w-8 h-8 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-600 flex items-center justify-center text-sm shadow-sm" title="Gold Medal">
+                        🥇
+                      </span>
+                    )}
+                    {rank === 2 && (
+                      <span class="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center text-sm shadow-sm" title="Silver Medal">
+                        🥈
+                      </span>
+                    )}
+                    {rank === 3 && (
+                      <span class="w-8 h-8 rounded-full bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-sm shadow-sm" title="Bronze Medal">
+                        🥉
+                      </span>
+                    )}
+                    {rank > 3 && <span class="text-base-400 font-sans text-sm">#{rank}</span>}
+                  </div>
+
+                  {/* Thumbnail */}
+                  {site.thumbnail_url && (
+                    <div class="w-16 h-11 rounded-lg border border-base-100 overflow-hidden shrink-0 bg-base-50 hidden sm:block">
+                      <img
+                        src={site.thumbnail_url}
+                        alt=""
+                        class="w-full h-full object-cover object-top"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
+                  {/* Product Details */}
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline gap-2">
+                      <a
+                        href={`/sites/site/${site.id}`}
+                        class="text-sm sm:text-base font-semibold text-base-900 hover:text-accent-600 hover:underline truncate"
+                      >
+                        {site.title}
+                      </a>
+                      {site.maker_username && (
+                        <span class="text-[10px] text-base-400 font-medium">
+                          by @{site.maker_username}
+                        </span>
+                      )}
+                    </div>
+                    <Text tag="p" variant="textXS" class="text-base-500 truncate mt-0.5 max-w-md">
+                      {site.tagline}
+                    </Text>
+                  </div>
+
+                  {/* Vote count Display */}
+                  <div class="flex items-center gap-3.5 shrink-0">
+                    <div class="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl border border-base-200 bg-base-50/50 min-w-16 text-center shadow-sm">
+                      <span class="text-sm font-bold text-base-800">
+                        {site.voteCount}
+                      </span>
+                      <span class="text-[9px] text-base-400 font-semibold uppercase tracking-wider">
+                        {lang === 'en' ? 'Votes' : 'Suara'}
+                      </span>
+                    </div>
+
+                    <Button
+                      isLink
+                      size="xs"
+                      variant="default"
+                      href={`/sites/site/${site.id}`}
+                      class="hidden sm:inline-flex"
+                    >
+                      View
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </Wrapper>
+  </section>
+</BaseLayout>

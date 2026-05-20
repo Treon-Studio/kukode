@@ -103,3 +103,56 @@ export const passkeys = sqliteTable('passkeys', {
   transports: text('transports'), // comma-separated list of transport strings
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
+
+export const potdHistory = sqliteTable('potd_history', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  site_id: text('site_id')
+    .references(() => submittedSites.id, { onDelete: 'cascade' })
+    .notNull(),
+  date: text('date').notNull().unique(), // YYYY-MM-DD
+  vote_count: integer('vote_count').default(0).notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+export const siteEvents = sqliteTable('site_events', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  site_id: text('site_id').references(() => submittedSites.id, { onDelete: 'cascade' }), // nullable (e.g. general site views)
+  event_type: text('event_type').notNull(), // 'view', 'click'
+  referrer: text('referrer'),
+  country: text('country'),
+  city: text('city'),
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+export const reports = sqliteTable('reports', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  comment_id: text('comment_id')
+    .references(() => comments.id, { onDelete: 'cascade' })
+    .notNull(),
+  reporter_id: text('reporter_id')
+    .references(() => profiles.id, { onDelete: 'cascade' })
+    .notNull(),
+  reason: text('reason').notNull(),
+  status: text('status').default('pending').notNull(), // 'pending', 'resolved', 'dismissed'
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});
+
+export const purchases = sqliteTable('purchases', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  user_id: text('user_id')
+    .references(() => profiles.id, { onDelete: 'cascade' })
+    .notNull(),
+  store_slug: text('store_slug').notNull(),
+  xendit_invoice_id: text('xendit_invoice_id').unique().notNull(),
+  amount: integer('amount').notNull(),
+  status: text('status').default('pending').notNull(), // 'pending', 'completed', 'failed'
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});

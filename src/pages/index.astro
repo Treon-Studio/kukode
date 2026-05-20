@@ -1,6 +1,7 @@
 ---
 import BlogPreview from '@/components/landing/BlogPreview.astro';
 import Hero from '@/components/landing/Hero.astro';
+import ProductOfTheDay from '@/components/landing/ProductOfTheDay.astro';
 import SitesPreview from '@/components/landing/SitesPreview.astro';
 import StorePreview from '@/components/landing/StorePreview.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -8,6 +9,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 
 <BaseLayout showSearch={true}>
   <Hero />
+  <ProductOfTheDay />
   <SitesPreview />
   <BlogPreview />
   <StorePreview />

@@ -1,0 +1,266 @@
+---
+import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { siteEvents, submittedSites, votes } from '@/db/schema';
+import { getLangFromLocals } from '@/i18n/utils';
+import DashboardLayout from '@/layouts/DashboardLayout.astro';
+
+const lang = getLangFromLocals(Astro.locals);
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/signin');
+}
+
+const { siteId } = Astro.params;
+if (!siteId) {
+  return Astro.redirect('/dashboard/products');
+}
+
+// 1. Fetch site details and confirm ownership
+const [site] = await db
+  .select()
+  .from(submittedSites)
+  .where(and(eq(submittedSites.id, siteId), eq(submittedSites.maker_id, user.id)))
+  .limit(1);
+
+if (!site) {
+  return Astro.redirect('/dashboard/products');
+}
+
+// 2. Fetch total upvotes
+const siteVotes = await db.select().from(votes).where(eq(votes.site_id, siteId));
+const upvotesCount = siteVotes.length;
+
+// 3. Fetch analytics metrics (views, clicks)
+const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+const [viewsResult] = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(siteEvents)
+  .where(and(eq(siteEvents.site_id, siteId), eq(siteEvents.event_type, 'view')));
+
+const [clicksResult] = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(siteEvents)
+  .where(and(eq(siteEvents.site_id, siteId), eq(siteEvents.event_type, 'click')));
+
+const totalViews = viewsResult?.count || 0;
+const totalClicks = clicksResult?.count || 0;
+const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
+
+// 4. Fetch top referrers
+const referrers = await db
+  .select({
+    referrer: siteEvents.referrer,
+    count: sql<number>`count(*)`.as('event_count'),
+  })
+  .from(siteEvents)
+  .where(and(eq(siteEvents.site_id, siteId), sql`referrer IS NOT NULL` as any))
+  .groupBy(siteEvents.referrer)
+  .orderBy(desc(sql`event_count`))
+  .limit(6);
+
+// 5. Fetch top locations (country)
+const countries = await db
+  .select({
+    country: siteEvents.country,
+    count: sql<number>`count(*)`.as('event_count'),
+  })
+  .from(siteEvents)
+  .where(and(eq(siteEvents.site_id, siteId), sql`country IS NOT NULL` as any))
+  .groupBy(siteEvents.country)
+  .orderBy(desc(sql`event_count`))
+  .limit(6);
+
+// 6. Fetch daily traffic trends (last 7 days for clean visual layout chart)
+const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+const dailyTrendsRaw = await db
+  .select({
+    day: sql<string>`date(created_at, 'unixepoch')`.as('day'),
+    eventType: siteEvents.event_type,
+    count: sql<number>`count(*)`,
+  })
+  .from(siteEvents)
+  .where(and(eq(siteEvents.site_id, siteId), gt(siteEvents.created_at, sevenDaysAgo)))
+  .groupBy(sql`day`, siteEvents.event_type)
+  .orderBy(sql`day`);
+
+// Process daily trends into chart structure
+const last7Days = Array.from({ length: 7 }, (_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - (6 - i));
+  return d.toISOString().split('T')[0];
+});
+
+const dailyData = last7Days.map((dayStr) => {
+  const viewItem = dailyTrendsRaw.find((r) => r.day === dayStr && r.eventType === 'view');
+  const clickItem = dailyTrendsRaw.find((r) => r.day === dayStr && r.eventType === 'click');
+  return {
+    label: new Date(dayStr).toLocaleDateString(lang === 'en' ? 'en-US' : 'id-ID', {
+      weekday: 'short',
+      day: 'numeric',
+    }),
+    views: viewItem?.count || 0,
+    clicks: clickItem?.count || 0,
+  };
+});
+
+const maxViews = Math.max(...dailyData.map((d) => d.views), 10);
+---
+
+<DashboardLayout title={site.title}>
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <Text tag="p" variant="textSM" class="text-base-600">
+        {lang === 'en' ? 'Performance analytics for ' : 'Analitik performa untuk '}<strong>{site.title}</strong>
+      </Text>
+    </div>
+    <Button size="xs" variant="muted" href="/dashboard/products">
+      {lang === 'en' ? 'Back to products' : 'Kembali ke produk'}
+    </Button>
+  </div>
+
+  {/* Metrics Grid */}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
+      <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">{lang === 'en' ? 'Views' : 'Tayangan'}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{totalViews}</span>
+    </div>
+    <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
+      <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">{lang === 'en' ? 'Clicks' : 'Klik'}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{totalClicks}</span>
+    </div>
+    <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
+      <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">CTR</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{ctr}%</span>
+    </div>
+    <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
+      <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Upvotes</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{upvotesCount}</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    {/* Daily Trend Chart (CSS/HTML Bar Chart) */}
+    <div class="lg:col-span-8 bg-white border border-base-200 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+      <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-6">
+        {lang === 'en' ? 'Weekly Traffic Trend' : 'Tren Lalu Lintas Mingguan'}
+      </Text>
+      
+      <div class="flex-1 flex items-end gap-3 h-56 pt-4 pb-2 border-b border-base-100">
+        {dailyData.map((data) => {
+          const viewHeight = (data.views / maxViews) * 100;
+          const clickHeight = (data.clicks / maxViews) * 100;
+          return (
+            <div class="flex-1 flex flex-col items-center h-full justify-end group">
+              <div class="w-full flex justify-center gap-1.5 items-end h-full">
+                {/* Views Bar */}
+                <div 
+                  class="w-3.5 bg-accent-500 rounded-t-sm hover:bg-accent-600 transition-all duration-300 relative"
+                  style={`height: ${Math.max(viewHeight, 2)}%`}
+                  title={`${data.views} views`}
+                >
+                  <span class="absolute -top-7 left-1/2 -translate-x-1/2 bg-base-900 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm pointer-events-none z-10">
+                    {data.views} views
+                  </span>
+                </div>
+                {/* Clicks Bar */}
+                <div 
+                  class="w-3.5 bg-green-500 rounded-t-sm hover:bg-green-600 transition-all duration-300 relative"
+                  style={`height: ${Math.max(clickHeight, 2)}%`}
+                  title={`${data.clicks} clicks`}
+                >
+                  <span class="absolute -top-7 left-1/2 -translate-x-1/2 bg-base-900 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm pointer-events-none z-10">
+                    {data.clicks} clicks
+                  </span>
+                </div>
+              </div>
+              <span class="text-[10px] text-base-400 font-medium mt-3 block text-center truncate w-full">
+                {data.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div class="flex items-center gap-4 mt-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <span class="size-2.5 bg-accent-500 rounded-full"></span>
+          <span class="text-base-500">{lang === 'en' ? 'Views' : 'Tayangan'}</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="size-2.5 bg-green-500 rounded-full"></span>
+          <span class="text-base-500">{lang === 'en' ? 'Clicks' : 'Klik Outbound'}</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Referrers & Countries breakdown */}
+    <div class="lg:col-span-4 space-y-6">
+      {/* Top Referrers */}
+      <div class="bg-white border border-base-200 p-6 rounded-2xl shadow-sm">
+        <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-4">
+          {lang === 'en' ? 'Top Referrers' : 'Rujukan Teratas'}
+        </Text>
+        
+        {(!referrers || referrers.length === 0) ? (
+          <p class="text-xs text-base-400 italic py-4">No data available.</p>
+        ) : (
+          <div class="space-y-3.5">
+            {referrers.map((ref) => {
+              const maxRefVal = Math.max(...referrers.map(r => r.event_count), 1);
+              const percentage = (ref.event_count / maxRefVal) * 100;
+              return (
+                <div class="space-y-1">
+                  <div class="flex justify-between text-xs font-medium">
+                    <span class="text-base-700 truncate max-w-40 font-mono">
+                      {ref.referrer === 'direct' ? 'Direct traffic' : ref.referrer}
+                    </span>
+                    <span class="text-base-900">{ref.event_count}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-base-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-accent-600 rounded-full" style={`width: ${percentage}%`}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Top Locations */}
+      <div class="bg-white border border-base-200 p-6 rounded-2xl shadow-sm">
+        <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-4">
+          {lang === 'en' ? 'Top Locations' : 'Lokasi Teratas'}
+        </Text>
+        
+        {(!countries || countries.length === 0) ? (
+          <p class="text-xs text-base-400 italic py-4">No data available.</p>
+        ) : (
+          <div class="space-y-3.5">
+            {countries.map((c) => {
+              const maxCountryVal = Math.max(...countries.map(co => co.event_count), 1);
+              const percentage = (c.event_count / maxCountryVal) * 100;
+              return (
+                <div class="space-y-1">
+                  <div class="flex justify-between text-xs font-medium">
+                    <span class="text-base-700 truncate capitalize">
+                      {c.country === 'Unknown' ? 'Unknown location' : c.country}
+                    </span>
+                    <span class="text-base-900">{c.event_count}</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-base-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-green-500 rounded-full" style={`width: ${percentage}%`}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</DashboardLayout>

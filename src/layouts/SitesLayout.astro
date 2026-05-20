@@ -66,6 +66,7 @@ const seoProps = {
             href={frontmatter.live}
             title={frontmatter.title}
             target="_blank"
+            data-visit-btn={siteId}
           >
             <ArrowupRight slot="icon" class="size-4" />
           </Button>
@@ -203,4 +204,23 @@ const seoProps = {
       }
     });
   }
+
+  // Click tracking
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-visit-btn]');
+    if (!btn) return;
+
+    const siteId = btn.dataset.visitBtn;
+    if (!siteId) return;
+
+    fetch('/api/events/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        site_id: siteId,
+        event_type: 'click',
+        referrer: window.location.href,
+      }),
+    }).catch(() => {});
+  });
 </script>

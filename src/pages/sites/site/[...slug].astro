@@ -6,6 +6,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { profiles, submittedSites, votes } from '@/db/schema';
 import SitesLayout from '@/layouts/SitesLayout.astro';
+import { recordEvent } from '@/lib/analytics';
 
 const { slug } = Astro.params;
 const user = (Astro.locals as any).user;
@@ -63,7 +64,27 @@ if (staticPage) {
   voteCount = siteVotes.length;
   voted = user ? siteVotes.some((v) => v.user_id === user.id) : false;
 
-  // 3. Update view count asynchronously (fire and forget)
+  // 3. Record view and update view count asynchronously
+  const ip =
+    Astro.request.headers.get('cf-connecting-ip') ||
+    Astro.request.headers.get('x-real-ip') ||
+    Astro.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    '127.0.0.1';
+  const country = Astro.request.headers.get('cf-ipcountry') || 'Unknown';
+  const city = Astro.request.headers.get('cf-ipcity') || 'Unknown';
+  const referrer = Astro.request.headers.get('referer') || 'direct';
+
+  recordEvent({
+    siteId: dbSite.id,
+    eventType: 'view',
+    referrer,
+    ip,
+    userId: user?.id,
+    country,
+    city,
+    env: Astro.locals.runtime?.env,
+  }).catch((err) => console.error('[Analytics] Failed to track view:', err));
+
   db.update(submittedSites)
     .set({ views_count: sql`${submittedSites.views_count} + 1` })
     .where(eq(submittedSites.id, dbSite.id))

@@ -11,7 +11,7 @@ const limiters: Record<string, { limit: number; window: string }> = {
 let redisInstance: Redis | null = null;
 const ratelimitInstances = new Map<string, Ratelimit>();
 
-function getRedis(env: any): Redis | null {
+export function getRedis(env: any): Redis | null {
   const url =
     env?.UPSTASH_REDIS_REST_URL ||
     (typeof import.meta !== 'undefined' && import.meta.env

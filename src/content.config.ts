@@ -27,7 +27,6 @@ const store = defineCollection({
       price: z.string(),
       title: z.string(),
       preview: z.string(),
-      checkout: z.string(),
       license: z.string(),
       highlights: z.array(z.string()),
       description: z.string(),

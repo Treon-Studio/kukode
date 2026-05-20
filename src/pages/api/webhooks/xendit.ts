@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { purchases, submittedSites } from '@/db/schema';
+import { profiles, purchases, submittedSites } from '@/db/schema';
+import { APP_CONFIG } from '@/lib/constants';
 
 export const prerender = false;
 
@@ -42,13 +43,82 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const parts = external_id.split('_');
 
       if (parts[0] === 'adv') {
-        // If it contains a siteId, mark the product as sponsored
-        if (parts.length >= 5) {
-          const siteId = parts[3];
+        const pkg = parts[1] || 'sponsored';
+        const userId = parts[2];
+        const siteId = parts[3];
+
+        if (siteId) {
           await db
             .update(submittedSites)
             .set({ is_sponsored: true })
             .where(eq(submittedSites.id, siteId));
+        }
+
+        // Fetch user and product details for notification
+        if (userId) {
+          const [userProfile] = await db
+            .select({
+              email: profiles.email,
+              full_name: profiles.full_name,
+              username: profiles.username,
+            })
+            .from(profiles)
+            .where(eq(profiles.id, userId))
+            .limit(1);
+
+          let siteTitle = 'Produk Anda';
+          if (siteId) {
+            const [site] = await db
+              .select({ title: submittedSites.title })
+              .from(submittedSites)
+              .where(eq(submittedSites.id, siteId))
+              .limit(1);
+            if (site) siteTitle = site.title;
+          }
+
+          if (userProfile?.email) {
+            import('@/lib/email').then(({ sendEmail }) => {
+              sendEmail({
+                to: userProfile.email,
+                subject: `Pembayaran Sponsor Aktif: ${siteTitle} 🚀`,
+                html: `
+                  <h3>Halo, ${userProfile.full_name || userProfile.username}!</h3>
+                  <p>Terima kasih! Pembayaran Anda untuk paket promosi <strong>${pkg}</strong> telah berhasil kami terima.</p>
+                  <p>Status promosi produk Anda <strong>${siteTitle}</strong> kini telah aktif dan ditampilkan sebagai Sponsored Listing di halaman depan Kukode.</p>
+                `,
+              }).catch((err) => console.error('[Notification] Error sending sponsor payment email:', err));
+            });
+          }
+        }
+      } else if (parts[0] === 'store') {
+        const storeSlug = parts[1];
+        const userId = parts[2];
+
+        if (userId && storeSlug) {
+          const [userProfile] = await db
+            .select({
+              email: profiles.email,
+              full_name: profiles.full_name,
+              username: profiles.username,
+            })
+            .from(profiles)
+            .where(eq(profiles.id, userId))
+            .limit(1);
+
+          if (userProfile?.email) {
+            import('@/lib/email').then(({ sendEmail }) => {
+              sendEmail({
+                to: userProfile.email,
+                subject: `Pembelian Sukses: Template ${storeSlug} 🛒`,
+                html: `
+                  <h3>Halo, ${userProfile.full_name || userProfile.username}!</h3>
+                  <p>Terima kasih atas pembelian Anda! Pembayaran Anda untuk template digital <strong>${storeSlug}</strong> telah berhasil kami terima.</p>
+                  <p>Anda dapat mengakses berkas unduhan/akses produk digital Anda langsung melalui tautan berikut:</p>
+                  <p><a href="${APP_CONFIG.BASE_URL}/store" style="display: inline-block; padding: 0.5rem 1rem; background-color: #10b981; color: white; text-decoration: none; border-radius: 0.375rem; font-weight: 500;">Akses Halaman Toko</a></p>
+                `,
+              }).catch((err) => console.error('[Notification] Error sending store purchase email:', err));
+            });
+          }
         }
       }
     } else if (status === 'EXPIRED' || status === 'FAILED') {

@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { and, desc, eq, gt, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { potdHistory, submittedSites, votes } from '@/db/schema';
+import { potdHistory, profiles, submittedSites, votes } from '@/db/schema';
+import { APP_CONFIG } from '@/lib/constants';
 
 export const prerender = false;
 
@@ -118,12 +119,35 @@ export const GET: APIRoute = async ({ request, locals }) => {
       })
       .returning();
 
-    // Fetch site title for response
+    // Fetch site title and maker details for response & notification
     const [siteInfo] = await db
-      .select({ title: submittedSites.title })
+      .select({
+        title: submittedSites.title,
+        maker_id: submittedSites.maker_id,
+        maker_email: profiles.email,
+        maker_name: profiles.full_name,
+        maker_username: profiles.username,
+      })
       .from(submittedSites)
+      .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
       .where(eq(submittedSites.id, winningSiteId))
       .limit(1);
+
+    // Send notification email to the maker
+    if (siteInfo?.maker_email) {
+      import('@/lib/email').then(({ sendEmail }) => {
+        sendEmail({
+          to: siteInfo.maker_email,
+          subject: `Selamat! Produk Anda terpilih sebagai Product of the Day! 🏆`,
+          html: `
+            <h3>Selamat, ${siteInfo.maker_name || siteInfo.maker_username}!</h3>
+            <p>Produk Anda <strong>${siteInfo.title}</strong> telah resmi terpilih sebagai <strong>Product of the Day (POTD)</strong> hari ini di Kukode dengan total <strong>${winningVotes}</strong> suara harian!</p>
+            <p>Produk Anda sekarang ditampilkan di bagian atas halaman beranda Kukode untuk mendapatkan eksposur maksimal.</p>
+            <p><a href="${APP_CONFIG.BASE_URL}/sites/site/${winningSiteId}" style="display: inline-block; padding: 0.5rem 1rem; background-color: #f59e0b; color: white; text-decoration: none; border-radius: 0.375rem; font-weight: 500;">Lihat Produk Anda di Kukode</a></p>
+          `,
+        }).catch((err) => console.error('[Notification] Error sending POTD email:', err));
+      });
+    }
 
     return new Response(
       JSON.stringify({

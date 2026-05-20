@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { purchases } from '@/db/schema';
+import { purchases, submittedSites } from '@/db/schema';
 import { createXenditInvoice } from '@/lib/xendit';
 
 export const prerender = false;
@@ -9,6 +10,15 @@ export const GET: APIRoute = async ({ request, locals, redirect }) => {
   const user = (locals as any).user;
   if (!user) {
     return redirect('/signin?redirect=/advertise');
+  }
+
+  // Enforce sponsored slot limit (max 3)
+  const activeSponsors = await db
+    .select()
+    .from(submittedSites)
+    .where(eq(submittedSites.is_sponsored, true));
+  if (activeSponsors.length >= 3) {
+    return new Response('All sponsored advertisement slots are currently full. Please try again later.', { status: 400 });
   }
 
   const url = new URL(request.url);

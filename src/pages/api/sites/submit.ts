@@ -102,8 +102,9 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       await db.update(profilesTable).set({ role: 'maker' }).where(eq(profilesTable.id, user.id));
     }
 
-    // Send email notification to Admin
+    // Send email notification to Admin & Maker
     import('@/lib/email').then(({ sendEmail }) => {
+      // Admin notification
       sendEmail({
         to: NOTIFICATION_CONFIG.ADMIN_EMAIL,
         subject: `New Product Submitted: ${title}`,
@@ -116,6 +117,20 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
           <p>Please review it in the <a href="${APP_CONFIG.BASE_URL}/admin/products">Admin Panel</a>.</p>
         `,
       }).catch(console.error);
+
+      // Maker notification
+      if (user.email) {
+        sendEmail({
+          to: user.email,
+          subject: `Submission Berhasil: ${title} 🚀`,
+          html: `
+            <h3>Halo, ${profile?.full_name || profile?.username || 'Maker'}!</h3>
+            <p>Terima kasih telah mensubmit produk <strong>${title}</strong> ke Kukode.</p>
+            <p>Status submission Anda saat ini adalah <strong>${status === 'approved' ? 'Disetujui (Auto-Approved)' : 'Menunggu Review'}</strong>.</p>
+            <p>Kami akan meninjau produk Anda secepatnya dan mengirimkan email konfirmasi lanjutan setelah status diperbarui.</p>
+          `,
+        }).catch(console.error);
+      }
     });
 
     // Send Discord push notification asynchronously

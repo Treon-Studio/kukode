@@ -1,12 +1,22 @@
 ---
+import { eq } from 'drizzle-orm';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
+import { db } from '@/db';
+import { submittedSites } from '@/db/schema';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
+
+// Check if sponsored slots are full (max 3 active)
+const sponsoredSites = await db
+  .select()
+  .from(submittedSites)
+  .where(eq(submittedSites.is_sponsored, true));
+const isSlotFull = sponsoredSites.length >= 3;
 
 // Data
 const packages = [
@@ -55,7 +65,7 @@ const packages = [
 >
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
-      <div class="text-center max-w-3xl mx-auto text-balance">
+      <div class="text-center max-w-3xl mx-auto text-balance mb-12">
         <Text
           tag="h1"
           variant="displayLG"
@@ -67,7 +77,16 @@ const packages = [
           {t('adv.subtitle')}
         </Text>
       </div>
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-12">
+
+      {isSlotFull && (
+        <div class="mb-12 rounded-lg bg-yellow-50 border border-yellow-200 px-6 py-4 text-center text-sm text-yellow-800 max-w-2xl mx-auto">
+          {lang === 'en'
+            ? 'Sponsored slots are currently full. Please check back later!'
+            : 'Slot promosi saat ini sudah penuh. Silakan coba lagi beberapa saat lagi!'}
+        </div>
+      )}
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {
           packages.map((pkg) => (
             <div class="flex flex-col h-full justify-between bg-base-50 rounded-lg p-8 ">
@@ -106,15 +125,26 @@ const packages = [
                   ))}
                 </ul>
               </div>
-              <Button
-                size="base"
-                variant="default"
-                isLink={true}
-                href={`/api/advertise/create-invoice?pkg=${pkg.slug}`}
-                class="w-fit mt-8"
-              >
-                {t('pricing.choosePlan')}
-              </Button>
+              {isSlotFull ? (
+                <Button
+                  size="base"
+                  variant="muted"
+                  disabled={true}
+                  class="w-fit mt-8 cursor-not-allowed opacity-50"
+                >
+                  {lang === 'en' ? 'Slot Full' : 'Slot Penuh'}
+                </Button>
+              ) : (
+                <Button
+                  size="base"
+                  variant="default"
+                  isLink={true}
+                  href={`/api/advertise/create-invoice?pkg=${pkg.slug}`}
+                  class="w-fit mt-8"
+                >
+                  {t('pricing.choosePlan')}
+                </Button>
+              )}
             </div>
           ))
         }

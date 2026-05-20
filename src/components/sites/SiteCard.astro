@@ -2,7 +2,7 @@
 // Content
 const isDynamic = Astro.props.post.isDynamic;
 const { title, url, thumbnail, live } = {
-  url: isDynamic ? Astro.props.post.data.live : '/sites/site/' + Astro.props.post.id,
+  url: '/sites/site/' + Astro.props.post.id,
   live: Astro.props.post.data.live,
   title: Astro.props.post.data.title,
   thumbnail: Astro.props.post.data.thumbnail.url,
@@ -36,7 +36,7 @@ const { voteCount = 0, siteId = '', voted = false } = Astro.props;
         class="object-cover aspect-8/5 w-full object-top rounded shadow"
       />
     )}
-    <a href={url} title={title} target={isDynamic ? "_blank" : "_self"} rel={isDynamic ? "noopener noreferrer" : ""}>
+    <a href={url} title={title}>
       <span class="absolute inset-0"></span>
     </a>
   </div>

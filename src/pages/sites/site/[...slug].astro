@@ -4,10 +4,11 @@
 import { getCollection, render } from 'astro:content';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { profiles, submittedSites } from '@/db/schema';
+import { profiles, submittedSites, votes } from '@/db/schema';
 import SitesLayout from '@/layouts/SitesLayout.astro';
 
 const { slug } = Astro.params;
+const user = (Astro.locals as any).user;
 
 if (!slug) {
   return Astro.redirect('/404');
@@ -16,6 +17,9 @@ if (!slug) {
 let frontmatter: any = null;
 let isDynamic = false;
 let ContentComp: any = null;
+let voteCount = 0;
+let voted = false;
+let siteId = '';
 
 // 1. Check static collection first
 const sites = await getCollection('sites');
@@ -52,6 +56,12 @@ if (staticPage) {
   }
 
   isDynamic = true;
+  siteId = dbSite.id;
+
+  // Fetch votes for this site
+  const siteVotes = await db.select().from(votes).where(eq(votes.site_id, dbSite.id));
+  voteCount = siteVotes.length;
+  voted = user ? siteVotes.some((v) => v.user_id === user.id) : false;
 
   // 3. Update view count asynchronously (fire and forget)
   db.update(submittedSites)
@@ -85,6 +95,12 @@ if (staticPage) {
 }
 ---
 
-<SitesLayout frontmatter={frontmatter} isDynamic={isDynamic}>
+<SitesLayout 
+  frontmatter={frontmatter} 
+  isDynamic={isDynamic}
+  voteCount={voteCount}
+  voted={voted}
+  siteId={siteId}
+>
   {ContentComp && <ContentComp />}
 </SitesLayout>

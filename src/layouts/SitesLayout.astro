@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 
 const alltools = await getCollection('sites');
 // Frontmatter
-const { frontmatter, isDynamic = false } = Astro.props;
+const { frontmatter, isDynamic = false, voteCount = 0, voted = false, siteId = '' } = Astro.props;
 
 import { Image } from 'astro:assets';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
@@ -39,16 +39,37 @@ const seoProps = {
             {frontmatter.description}
           </Text>
         </div>
-        <Button
-          iconOnly
-          size="xs"
-          variant="default"
-          href={frontmatter.live}
-          title={frontmatter.title}
-          target="_blank"
-        >
-          <ArrowupRight slot="icon" class="size-4" />
-        </Button>
+        <div class="flex items-center gap-2">
+          {isDynamic && (
+            <button
+              type="button"
+              class:list={[
+                'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 h-9 shadow-sm border focus:outline-none focus:ring-2 focus:ring-accent-500 cursor-pointer',
+                voted
+                  ? 'border-accent-300 bg-accent-50 text-accent-700'
+                  : 'border-base-200 bg-white text-base-800 hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700',
+              ]}
+              data-vote-btn
+              data-site-id={siteId}
+              data-voted={voted ? 'true' : 'false'}
+            >
+              <svg class="size-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span data-vote-count={siteId}>{voteCount}</span>
+            </button>
+          )}
+          <Button
+            iconOnly
+            size="xs"
+            variant="default"
+            href={frontmatter.live}
+            title={frontmatter.title}
+            target="_blank"
+          >
+            <ArrowupRight slot="icon" class="size-4" />
+          </Button>
+        </div>
       </div>
       <div class="p-8 bg-base-50 rounded-lg mt-12 relative group">
         {isDynamic ? (
@@ -124,3 +145,62 @@ const seoProps = {
     </Wrapper>
   </section>
 </BaseLayout>
+
+<script is:inline>
+  if (!window.__kukodeVoteInit) {
+    window.__kukodeVoteInit = true;
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-vote-btn]');
+      if (!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const siteId = btn.dataset.siteId;
+      if (!siteId) return;
+
+      const countEl = btn.querySelector('[data-vote-count]');
+      const wasVoted = btn.dataset.voted === 'true';
+      const currentCount = parseInt(countEl?.textContent || '0', 10);
+
+      // Optimistic update
+      btn.dataset.voted = wasVoted ? 'false' : 'true';
+      if (countEl) countEl.textContent = wasVoted ? currentCount - 1 : currentCount + 1;
+
+      if (wasVoted) {
+        btn.classList.remove('border-accent-300', 'bg-accent-50', 'text-accent-700');
+        btn.classList.add('border-base-200', 'bg-white', 'text-base-800');
+      } else {
+        btn.classList.add('border-accent-300', 'bg-accent-50', 'text-accent-700');
+        btn.classList.remove('border-base-200', 'bg-white', 'text-base-800');
+      }
+
+      try {
+        const res = await fetch('/api/sites/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ site_id: siteId }),
+        });
+
+        const data = await res.json();
+
+        if (res.status === 401) {
+          btn.dataset.voted = wasVoted ? 'true' : 'false';
+          if (countEl) countEl.textContent = currentCount;
+          window.location.href = '/signin?redirect=' + encodeURIComponent(window.location.pathname);
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Vote failed');
+        }
+
+        btn.dataset.voted = data.voted ? 'true' : 'false';
+        if (countEl) countEl.textContent = data.vote_count;
+      } catch (err) {
+        btn.dataset.voted = wasVoted ? 'true' : 'false';
+        if (countEl) countEl.textContent = currentCount;
+      }
+    });
+  }
+</script>

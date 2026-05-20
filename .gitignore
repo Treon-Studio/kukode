@@ -20,3 +20,5 @@ local.db
 local.db-journal
 .wrangler/
 graphify-out/
+.agents/
+skills-lock.json

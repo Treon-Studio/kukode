@@ -15,6 +15,7 @@ export const profiles = sqliteTable('profiles', {
   twitter: text('twitter'),
   github: text('github'),
   role: text('role').default('user').notNull(), // 'user', 'maker', 'admin'
+  preferred_lang: text('preferred_lang').default('en').notNull(), // 'en', 'id'
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
 

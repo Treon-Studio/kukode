@@ -36,6 +36,9 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     // Hash password using Web Crypto PBKDF2
     const passwordHash = await hashPassword(password);
 
+    // Get current language cookie preference
+    const preferredLang = cookies.get('preferred_lang')?.value || 'en';
+
     // Insert user into profiles
     const [newUser] = await db
       .insert(profiles)
@@ -45,6 +48,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
         username,
         full_name: fullName || null,
         role: 'user', // Default role
+        preferred_lang: preferredLang,
       })
       .returning();
 

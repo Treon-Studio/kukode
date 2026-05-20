@@ -13,9 +13,14 @@ import { AUTH_CONFIG } from '@/lib/constants';
  */
 export const onRequest = defineMiddleware(
   async ({ request, cookies, locals, url, redirect }, next) => {
-    // Detect preferred language
-    let lang = url.searchParams.get('lang');
-    if (lang === 'en' || lang === 'id') {
+    // Detect preferred language from query param
+    const langQuery = url.searchParams.get('lang');
+    let hasExplicitLangQuery = false;
+    let lang = 'en';
+
+    if (langQuery === 'en' || langQuery === 'id') {
+      hasExplicitLangQuery = true;
+      lang = langQuery;
       cookies.set('preferred_lang', lang, {
         path: '/',
         httpOnly: false,
@@ -65,6 +70,29 @@ export const onRequest = defineMiddleware(
               avatar_url: sessionWithUser.user.avatar_url,
               role: sessionWithUser.user.role,
             };
+
+            // Sync preferred language
+            if (hasExplicitLangQuery) {
+              // Update database with the explicit choice
+              await db
+                .update(profiles)
+                .set({ preferred_lang: lang })
+                .where(eq(profiles.id, sessionWithUser.user.id));
+            } else {
+              // Sync cookie with database preference if they differ
+              const dbLang = sessionWithUser.user.preferred_lang;
+              if (dbLang && dbLang !== lang && (dbLang === 'en' || dbLang === 'id')) {
+                lang = dbLang;
+                (locals as any).lang = lang;
+                cookies.set('preferred_lang', lang, {
+                  path: '/',
+                  httpOnly: false,
+                  secure: import.meta.env.PROD,
+                  sameSite: 'lax',
+                  expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+                });
+              }
+            }
           } else {
             // Session has expired, delete it from DB and cookies
             await db.delete(sessions).where(eq(sessions.id, sessionId));

@@ -63,6 +63,15 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       expires: new Date(expiresAt * 1000),
     });
 
+    // Sync preferred_lang cookie with profile preference
+    cookies.set('preferred_lang', user.preferred_lang || 'en', {
+      path: '/',
+      httpOnly: false,
+      secure: import.meta.env.PROD,
+      sameSite: 'lax',
+      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    });
+
     return redirect(redirectPath, 302);
   } catch (err: any) {
     return redirect(

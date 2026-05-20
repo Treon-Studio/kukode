@@ -5,9 +5,16 @@ import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import Logo from '@/components/global/Logo.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import { isEnabled } from '@/lib/flags';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
+
+const user = (Astro.locals as any).user;
+const showNewsletter = await isEnabled('newsletter_subscribe', { userId: user?.id });
+
+const newsletterSuccess = Astro.url.searchParams.get('newsletter_success');
+const newsletterError = Astro.url.searchParams.get('newsletter_error');
 ---
 
 <footer class="bg-base-50 overflow-hidden">
@@ -23,30 +30,48 @@ const t = useTranslations(lang);
           {t('footer.stayConnected')}
         </Text>
       </div>
-      <form
-        class="flex flex-col gap-2 max-w-md mx-auto items-start sm:items-center mt-8"
-      >
-        <label class="sr-only" for="footer-email">Email address</label>
-        <input
-          id="footer-email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          placeholder={t('footer.emailPlaceholder')}
-          class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
-          required
-        />
-        <Button
-          size="sm"
-          variant="accent"
-          animated={true}
-          withArrow={true}
-          type="submit"
-          class="w-full"
-        >
-          {t('footer.subscribe')}
-        </Button>
-      </form>
+
+      {showNewsletter && (
+        <>
+          {newsletterSuccess && (
+            <div class="mt-6 rounded-lg bg-green-50 border border-green-200 px-4 py-2 text-center text-xs text-green-800 max-w-md mx-auto">
+              {newsletterSuccess}
+            </div>
+          )}
+          {newsletterError && (
+            <div class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-center text-xs text-red-800 max-w-md mx-auto">
+              {newsletterError}
+            </div>
+          )}
+          <form
+            action="/api/newsletter/subscribe"
+            method="POST"
+            class="flex flex-col gap-2 max-w-md mx-auto items-start sm:items-center mt-8"
+          >
+            <label class="sr-only" for="footer-email">Email address</label>
+            <input
+              id="footer-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder={t('footer.emailPlaceholder')}
+              class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+              required
+            />
+            <Button
+              size="sm"
+              variant="accent"
+              animated={true}
+              withArrow={true}
+              type="submit"
+              class="w-full"
+            >
+              {t('footer.subscribe')}
+            </Button>
+          </form>
+        </>
+      )}
+
       <div class="flex flex-wrap gap-4 mt-12 justify-center">
         <a href="#_" class="text-base-600 hover:text-accent-600">Twitter</a>
         <a href="#_" class="text-base-600 hover:text-accent-600">Pinterest</a>

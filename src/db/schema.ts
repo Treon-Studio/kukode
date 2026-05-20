@@ -156,3 +156,11 @@ export const purchases = sqliteTable('purchases', {
   status: text('status').default('pending').notNull(), // 'pending', 'completed', 'failed'
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });
+
+export const newsletterSubscriptions = sqliteTable('newsletter_subscriptions', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  email: text('email').unique().notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
+});

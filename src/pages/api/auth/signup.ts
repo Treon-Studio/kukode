@@ -8,7 +8,7 @@ import { notifyUserRegistration } from '@/lib/discord';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, cookies, redirect }) => {
+export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => {
   try {
     const formData = await request.formData();
     const email = formData.get('email')?.toString()?.trim()?.toLowerCase();
@@ -72,11 +72,14 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     });
 
     // Notify Discord asynchronously
-    notifyUserRegistration({
-      username: newUser.username || '',
-      email: newUser.email,
-      fullName: newUser.full_name,
-    }).catch(console.error);
+    notifyUserRegistration(
+      {
+        username: newUser.username || '',
+        email: newUser.email,
+        fullName: newUser.full_name,
+      },
+      locals.runtime?.env?.DISCORD_WEBHOOK_URL
+    ).catch(console.error);
 
     return redirect('/dashboard', 302);
   } catch (err: any) {

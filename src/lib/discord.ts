@@ -17,14 +17,19 @@ interface DiscordEmbed {
 /**
  * Sends a raw payload to Discord Webhook.
  */
-export async function sendDiscordNotification(payload: {
-  content?: string;
-  embeds?: DiscordEmbed[];
-}) {
+export async function sendDiscordNotification(
+  payload: {
+    content?: string;
+    embeds?: DiscordEmbed[];
+  },
+  customWebhookUrl?: string
+) {
   const webhookUrl =
+    customWebhookUrl ||
     (typeof import.meta !== 'undefined' && import.meta.env
       ? import.meta.env.DISCORD_WEBHOOK_URL
-      : undefined) || process.env.DISCORD_WEBHOOK_URL;
+      : undefined) ||
+    process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log('Discord webhook skipped: DISCORD_WEBHOOK_URL env not set.');
     return;
@@ -55,42 +60,51 @@ export async function sendDiscordNotification(payload: {
 /**
  * Sends a notification for user sign up / registration.
  */
-export async function notifyUserRegistration(user: {
-  username: string;
-  email: string;
-  fullName?: string | null;
-}) {
-  await sendDiscordNotification({
-    embeds: [
-      {
-        title: '👤 Registrasi Pengguna Baru!',
-        description: `Pengguna baru telah mendaftar ke platform Kukode.`,
-        color: NOTIFICATION_CONFIG.COLORS.INFO, // Accent blue color
-        fields: [
-          { name: 'Username', value: `@${user.username}`, inline: true },
-          { name: 'Nama Lengkap', value: user.fullName || '-', inline: true },
-          { name: 'Email', value: user.email, inline: false },
-        ],
-        timestamp: new Date().toISOString(),
-        footer: {
-          text: 'Kukode Auth System',
+export async function notifyUserRegistration(
+  user: {
+    username: string;
+    email: string;
+    fullName?: string | null;
+  },
+  webhookUrl?: string
+) {
+  await sendDiscordNotification(
+    {
+      embeds: [
+        {
+          title: '👤 Registrasi Pengguna Baru!',
+          description: `Pengguna baru telah mendaftar ke platform Kukode.`,
+          color: NOTIFICATION_CONFIG.COLORS.INFO, // Accent blue color
+          fields: [
+            { name: 'Username', value: `@${user.username}`, inline: true },
+            { name: 'Nama Lengkap', value: user.fullName || '-', inline: true },
+            { name: 'Email', value: user.email, inline: false },
+          ],
+          timestamp: new Date().toISOString(),
+          footer: {
+            text: 'Kukode Auth System',
+          },
         },
-      },
-    ],
-  });
+      ],
+    },
+    webhookUrl
+  );
 }
 
 /**
  * Sends a notification for project submission.
  */
-export async function notifyProjectSubmission(project: {
-  title: string;
-  tagline: string;
-  liveUrl: string;
-  thumbnailUrl?: string | null;
-  tags?: string[];
-  makerUsername: string;
-}) {
+export async function notifyProjectSubmission(
+  project: {
+    title: string;
+    tagline: string;
+    liveUrl: string;
+    thumbnailUrl?: string | null;
+    tags?: string[];
+    makerUsername: string;
+  },
+  webhookUrl?: string
+) {
   const embeds: DiscordEmbed[] = [
     {
       title: `🚀 Produk Baru Disubmit: ${project.title}`,
@@ -117,5 +131,5 @@ export async function notifyProjectSubmission(project: {
     embeds[0].thumbnail = { url: project.thumbnailUrl };
   }
 
-  await sendDiscordNotification({ embeds });
+  await sendDiscordNotification({ embeds }, webhookUrl);
 }

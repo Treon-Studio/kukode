@@ -119,14 +119,17 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     });
 
     // Send Discord push notification asynchronously
-    notifyProjectSubmission({
-      title,
-      tagline,
-      liveUrl,
-      thumbnailUrl,
-      tags,
-      makerUsername: profile?.username || user.email || 'anonymous',
-    }).catch(console.error);
+    notifyProjectSubmission(
+      {
+        title,
+        tagline,
+        liveUrl,
+        thumbnailUrl,
+        tags,
+        makerUsername: profile?.username || user.email || 'anonymous',
+      },
+      locals.runtime?.env?.DISCORD_WEBHOOK_URL
+    ).catch(console.error);
 
     return redirect('/dashboard?message=Produk+berhasil+disubmit!', 302);
   } catch (err: any) {

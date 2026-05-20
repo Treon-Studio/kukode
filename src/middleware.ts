@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { profiles, sessions } from '@/db/schema';
 import { AUTH_CONFIG } from '@/lib/constants';
+import { checkRateLimit } from '@/lib/ratelimit';
 
 /**
  * Astro middleware — runs on every server-rendered request.
@@ -108,6 +109,85 @@ export const onRequest = defineMiddleware(
     const user = (locals as any).user;
     const profile = (locals as any).profile;
     const pathname = url.pathname;
+
+    // Rate Limiting Interceptor for write operations (POST)
+    if (request.method === 'POST') {
+      let limitType: 'auth' | 'action' | null = null;
+      let isRedirectAction = false;
+
+      if (pathname.startsWith('/api/auth/signup') || pathname.startsWith('/api/auth/signin')) {
+        limitType = 'auth';
+        isRedirectAction = true;
+      } else if (
+        pathname.startsWith('/api/sites/submit') ||
+        pathname.startsWith('/api/sites/comment')
+      ) {
+        limitType = 'action';
+        isRedirectAction = true;
+      } else if (pathname.startsWith('/api/sites/vote')) {
+        limitType = 'action';
+        isRedirectAction = false;
+      }
+
+      if (limitType) {
+        const ip = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
+        const identifier = limitType === 'auth' || !user ? ip : `user_${user.id}`;
+        const env = (locals as any).runtime?.env;
+
+        const limitResult = await checkRateLimit(limitType, identifier, env);
+
+        if (limitResult && !limitResult.success) {
+          if (isRedirectAction) {
+            const errorMsg =
+              lang === 'id'
+                ? 'Terlalu banyak permintaan. Silakan coba beberapa saat lagi.'
+                : 'Too many requests. Please try again later.';
+
+            let targetRedirect = '/';
+            if (pathname.startsWith('/api/auth/signup')) {
+              targetRedirect = `/signup?error=${encodeURIComponent(errorMsg)}`;
+            } else if (pathname.startsWith('/api/auth/signin')) {
+              targetRedirect = `/signin?error=${encodeURIComponent(errorMsg)}`;
+            } else if (pathname.startsWith('/api/sites/submit')) {
+              targetRedirect = `/submit?error=${encodeURIComponent(errorMsg)}`;
+            } else if (pathname.startsWith('/api/sites/comment')) {
+              const referer = request.headers.get('referer');
+              if (referer) {
+                try {
+                  const refUrl = new URL(referer);
+                  refUrl.searchParams.set('error', errorMsg);
+                  targetRedirect = refUrl.toString();
+                } catch {
+                  targetRedirect = `/?error=${encodeURIComponent(errorMsg)}`;
+                }
+              } else {
+                targetRedirect = `/?error=${encodeURIComponent(errorMsg)}`;
+              }
+            }
+            return redirect(targetRedirect, 302);
+          } else {
+            // For JSON endpoints (e.g. /api/sites/vote)
+            return new Response(
+              JSON.stringify({
+                error:
+                  lang === 'id'
+                    ? 'Terlalu banyak permintaan. Silakan coba beberapa saat lagi.'
+                    : 'Too many requests. Please try again later.',
+              }),
+              {
+                status: 429,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-RateLimit-Limit': limitResult.limit.toString(),
+                  'X-RateLimit-Remaining': limitResult.remaining.toString(),
+                  'X-RateLimit-Reset': limitResult.reset.toString(),
+                },
+              }
+            );
+          }
+        }
+      }
+    }
 
     // Protect /dashboard/* — requires any authenticated user
     if (pathname.startsWith('/dashboard')) {

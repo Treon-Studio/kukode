@@ -1,0 +1,94 @@
+---
+import UserAvatar from '@/components/global/UserAvatar.astro';
+import Button from '@/components/fundations/elements/Button.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+
+interface Comment {
+  id: string;
+  author: {
+    username: string;
+    avatarUrl?: string;
+  };
+  content: string;
+  createdAt: string;
+  upvotes: number;
+  replies?: Comment[];
+}
+
+interface Props {
+  comment: Comment;
+  depth?: number;
+}
+
+const { comment, depth = 0 } = Astro.props;
+const maxDepth = 4; // Stop indenting after this depth
+const indentClass = depth > 0 && depth <= maxDepth ? 'pl-4 sm:pl-8 border-l border-base-200 mt-4' : 'mt-6';
+---
+
+<div class={`flex flex-col ${indentClass} comment-item`} data-comment-id={comment.id}>
+  <!-- Comment Header -->
+  <div class="flex items-start gap-3">
+    <UserAvatar
+      username={comment.author.username}
+      avatarUrl={comment.author.avatarUrl}
+      class="size-8 rounded-full shrink-0"
+    />
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-sm text-base-900">{comment.author.username}</span>
+        <span class="text-xs text-base-400">&bull; {comment.createdAt}</span>
+      </div>
+      
+      <!-- Comment Content -->
+      <div class="mt-1 text-sm text-base-700 leading-relaxed break-words">
+        {comment.content}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-4 mt-2">
+        <button type="button" class="flex items-center gap-1.5 text-xs font-medium text-base-500 hover:text-accent-600 transition-colors group comment-upvote-btn">
+          <svg class="size-4 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+          <span>{comment.upvotes}</span>
+        </button>
+        <button type="button" class="flex items-center gap-1.5 text-xs font-medium text-base-500 hover:text-base-800 transition-colors comment-reply-btn">
+          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          </svg>
+          Reply
+        </button>
+        {comment.replies && comment.replies.length > 0 && (
+          <button type="button" class="text-xs font-medium text-base-500 hover:text-base-800 transition-colors comment-toggle-btn">
+            [–] Collapse
+          </button>
+        )}
+      </div>
+
+      <!-- Inline Reply Form (Hidden by default) -->
+      <div class="hidden mt-3 reply-form-container">
+        <form class="flex flex-col gap-2 relative">
+          <textarea
+            rows="2"
+            class="w-full text-sm p-3 border border-base-200 rounded-lg bg-base-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500 transition-colors resize-y min-h-[80px]"
+            placeholder={`Reply to ${comment.author.username}...`}
+            required
+          ></textarea>
+          <div class="flex justify-end gap-2">
+            <Button size="xs" variant="muted" type="button" class="cancel-reply-btn">Cancel</Button>
+            <Button size="xs" variant="accent" type="submit">Reply</Button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Recursive Replies -->
+      {comment.replies && comment.replies.length > 0 && (
+        <div class="replies-container transition-all duration-300 origin-top">
+          {comment.replies.map((reply) => (
+            <Astro.self comment={reply} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</div>

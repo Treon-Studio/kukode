@@ -54,9 +54,6 @@ export const NOTIFICATION_CONFIG = {
 export const NAVIGATION_LINKS = [
   { href: '/', translationKey: 'nav.websites' },
   { href: '/leaderboard/', translationKey: 'nav.leaderboard' },
-  { href: '/pricing/', translationKey: 'nav.pricing' },
   { href: '/blog/', translationKey: 'nav.blog' },
-  { href: '/store/', translationKey: 'nav.store' },
   { href: '/submit/', translationKey: 'nav.submit' },
-  { href: '/advertise/', translationKey: 'nav.sponsors' },
 ] as const;

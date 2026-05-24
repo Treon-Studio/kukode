@@ -1,0 +1,208 @@
+---
+import Button from '@/components/fundations/elements/Button.astro';
+import PasswordInput from '@/components/fundations/elements/PasswordInput.astro';
+import Text from '@/components/fundations/elements/Text.astro';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import GoogleButton from '@/domain/auth/components/GoogleButton.astro';
+
+interface Props {
+  errorMsg?: string | null;
+}
+
+const { errorMsg } = Astro.props;
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+---
+
+<div class="flex h-dvh">
+  <div class="w-full max-w-md py-24 mx-auto my-auto">
+    <div class="text-center">
+      <Text
+        tag="h1"
+        variant="displayLG"
+        class="text-base-900 font-display font-light"
+      >
+        {t('auth.signupTitle')}
+      </Text>
+      <Text tag="p" variant="textBase" class="text-base-600 mt-4">
+        {lang === 'en' ? 'Create your account below to start discovering and sharing maker tools on Kukode.' : 'Buat akun Anda di bawah ini untuk mulai menjelajah dan membagikan karya di Kukode.'}
+      </Text>
+    </div>
+
+    {/* Error message */}
+    {errorMsg && (
+      <div class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert">
+        {errorMsg}
+      </div>
+    )}
+
+    <form method="POST" action="/api/auth/signup" class="mt-10 space-y-4" id="signup-form">
+      <div class="w-full">
+        <div class="flex items-baseline justify-between mb-1">
+          <label for="username" class="text-sm font-medium text-base-500">
+            {t('auth.usernameLabel')} <span class="text-red-500">*</span>
+          </label>
+        </div>
+        <div class="relative z-0 focus-within:z-10">
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            placeholder="e.g. janesmith"
+            class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+          />
+        </div>
+        <p class="text-[10px] text-base-400 mt-1" id="username-helper"></p>
+      </div>
+
+      <div class="w-full">
+        <div class="flex items-baseline justify-between mb-1">
+          <label for="full_name" class="text-sm font-medium text-base-500">
+            {t('auth.fullNameLabel')}
+          </label>
+        </div>
+        <div class="relative z-0 focus-within:z-10">
+          <input
+            id="full_name"
+            name="full_name"
+            type="text"
+            placeholder="e.g. Jane Smith"
+            class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+          />
+        </div>
+      </div>
+
+      <div class="w-full">
+        <div class="flex items-baseline justify-between mb-1">
+          <label for="email" class="text-sm font-medium text-base-500">
+            {t('auth.emailLabel')} <span class="text-red-500">*</span>
+          </label>
+        </div>
+        <div class="relative z-0 focus-within:z-10">
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            placeholder={t('footer.emailPlaceholder')}
+            class="block w-full px-4 py-2 text-xs leading-tight align-middle bg-white border border-transparent transition duration-300 ease-in-out focus:z-10 h-9 rounded-md text-base-500 ring-1 ring-base-200 placeholder-base-400 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none shadow-sm"
+            inputmode="email"
+          />
+        </div>
+      </div>
+
+      <PasswordInput
+        id="password"
+        name="password"
+        minlength="6"
+        label={t('auth.passwordLabel')}
+      />
+
+      <PasswordInput
+        id="confirm-password"
+        name="confirm-password"
+        minlength="6"
+        label={lang === 'en' ? 'Confirm Password' : 'Konfirmasi Kata Sandi'}
+      />
+
+      <div id="local-error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800" role="alert"></div>
+
+      <div class="flex flex-col gap-2 pt-2">
+        <Button size="base" variant="accent" type="submit" id="submit-btn" class="w-full justify-center">
+          {t('auth.signupButton')}
+        </Button>
+        <GoogleButton
+          class="w-full inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-md bg-white text-base-800 border border-base-200 hover:bg-base-50 transition duration-200 focus:outline-none focus:ring-2 focus:ring-base-500 h-9 shadow-sm gap-2"
+          text={lang === 'en' ? 'Sign up with Google' : 'Daftar dengan Google'}
+        />
+      </div>
+    </form>
+
+    <Text
+      tag="p"
+      variant="textXS"
+      class="mt-6 font-medium text-center text-base-500"
+    >
+      {t('auth.haveAccount')}
+      <a
+        href="/signin"
+        class="font-medium text-accent-500 hover:text-base-500 ml-1"
+      >
+        {t('nav.signin')}
+      </a>
+    </Text>
+  </div>
+</div>
+
+<script is:inline define:vars={{ lang }}>
+  (() => {
+    const form = document.getElementById('signup-form');
+    const localErr = document.getElementById('local-error');
+    const emailInput = document.getElementById('email');
+    const usernameInput = document.getElementById('username');
+    const usernameHelper = document.getElementById('username-helper');
+    let isUsernameEdited = false;
+
+    // Set initial username helper and value
+    if (usernameInput && usernameHelper) {
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      usernameInput.value = `user_${randomSuffix}`;
+      usernameHelper.textContent = lang === 'en' ? 'Suggested username (auto-generated).' : 'Saran username (dibuat otomatis).';
+
+      // Detect manual edits
+      usernameInput.addEventListener('input', () => {
+        isUsernameEdited = true;
+        usernameHelper.textContent = lang === 'en' ? 'Custom username.' : 'Username pilihan Anda.';
+        usernameHelper.className = 'text-[10px] text-accent-500 font-semibold mt-1';
+      });
+    }
+
+    // Sync username with email input if not edited
+    if (emailInput && usernameInput) {
+      emailInput.addEventListener('input', () => {
+        if (isUsernameEdited) return;
+
+        const emailVal = emailInput.value || '';
+        const atIndex = emailVal.indexOf('@');
+        let suggested = '';
+
+        if (atIndex > 0) {
+          suggested = emailVal.slice(0, atIndex).toLowerCase();
+        } else {
+          suggested = emailVal.toLowerCase();
+        }
+
+        // Clean username: letters, numbers, underscores, dots, hyphens
+        suggested = suggested.replace(/[^a-z0-9_.-]/g, '');
+
+        if (suggested) {
+          usernameInput.value = suggested;
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+
+        if (password !== confirmPassword) {
+          e.preventDefault();
+          localErr.textContent = lang === 'en' ? 'Passwords do not match.' : 'Kata sandi dan konfirmasi kata sandi tidak cocok.';
+          localErr.classList.remove('hidden');
+          return;
+        }
+
+        localErr.classList.add('hidden');
+        const btn = document.getElementById('submit-btn');
+        if (btn) {
+          btn.setAttribute('disabled', 'true');
+          btn.setAttribute('aria-busy', 'true');
+          btn.textContent = lang === 'en' ? 'Creating Account...' : 'Membuat Akun...';
+        }
+      });
+    }
+  })();
+</script>

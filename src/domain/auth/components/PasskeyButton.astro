@@ -1,0 +1,24 @@
+---
+interface Props {
+  id: string;
+  textId?: string;
+  class?: string;
+  text?: string;
+}
+
+const {
+  id,
+  textId,
+  class: className = "w-full flex items-center justify-center gap-3 px-5 py-2.5 text-xs font-semibold rounded-full border border-base-200 bg-white hover:bg-base-50 text-base-800 transition duration-200 focus:outline-none focus:ring-2 focus:ring-accent-500 shadow-xs cursor-pointer",
+  text = "Continue with Passkey",
+} = Astro.props;
+---
+
+<button
+  type="button"
+  id={id}
+  class={className}
+>
+  <span class="text-sm shrink-0">🔑</span>
+  <span id={textId}>{text}</span>
+</button>

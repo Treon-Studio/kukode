@@ -1,0 +1,15 @@
+---
+interface Props {
+  class?: string;
+}
+
+const {
+  class: className = "relative flex py-2 items-center mb-6",
+} = Astro.props;
+---
+
+<div class={className}>
+  <div class="flex-grow border-t border-base-200"></div>
+  <span class="flex-shrink mx-4 text-[10px] font-bold text-base-400 tracking-widest uppercase">OR</span>
+  <div class="flex-grow border-t border-base-200"></div>
+</div>

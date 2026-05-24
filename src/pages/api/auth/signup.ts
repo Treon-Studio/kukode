@@ -1,88 +1,58 @@
 import type { APIRoute } from 'astro';
-import { eq, or } from 'drizzle-orm';
-import { db } from '@/db';
-import { profiles, sessions } from '@/db/schema';
-import { hashPassword } from '@/lib/auth-crypto';
+import { Effect } from 'effect';
+import { signupProgram } from '@/domain/auth';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
 import { AUTH_CONFIG } from '@/lib/constants';
-import { notifyUserRegistration } from '@/lib/discord';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => {
   try {
     const formData = await request.formData();
-    const email = formData.get('email')?.toString()?.trim()?.toLowerCase();
-    const password = formData.get('password')?.toString();
-    const username = formData.get('username')?.toString()?.trim()?.toLowerCase();
-    const fullName = formData.get('full_name')?.toString()?.trim();
+    const email = formData.get('email')?.toString()?.trim()?.toLowerCase() || '';
+    const password = formData.get('password')?.toString() || '';
+    const username = formData.get('username')?.toString()?.trim()?.toLowerCase() || '';
+    const fullName = formData.get('full_name')?.toString()?.trim() || '';
 
-    if (!email || !password || !username) {
-      return redirect('/signup?error=Semua+field+wajib+diisi', 302);
-    }
-
-    // Check if email or username already exists
-    const [existing] = await db
-      .select()
-      .from(profiles)
-      .where(or(eq(profiles.email, email), eq(profiles.username, username)))
-      .limit(1);
-
-    if (existing) {
-      const errorMsg =
-        existing.email === email ? 'Email sudah terdaftar.' : 'Username sudah digunakan.';
-      return redirect(`/signup?error=${encodeURIComponent(errorMsg)}`, 302);
-    }
-
-    // Hash password using Web Crypto PBKDF2
-    const passwordHash = await hashPassword(password);
-
-    // Get current language cookie preference
     const preferredLang = cookies.get('preferred_lang')?.value || 'en';
+    const webhookUrl = locals.runtime?.env?.DISCORD_WEBHOOK_URL;
 
-    // Insert user into profiles
-    const [newUser] = await db
-      .insert(profiles)
-      .values({
-        email,
-        password_hash: passwordHash,
-        username,
-        full_name: fullName || null,
-        role: 'user', // Default role
-        preferred_lang: preferredLang,
-      })
-      .returning();
+    const appRuntime = createAppRuntime(locals);
 
-    // Create session (expires in 30 days)
-    const expiresAt = Math.floor(Date.now() / 1000) + AUTH_CONFIG.SESSION_DURATION_SECONDS;
-    const [newSession] = await db
-      .insert(sessions)
-      .values({
-        user_id: newUser.id,
-        expires_at: expiresAt,
-      })
-      .returning();
+    const runnable = signupProgram(
+      { email, password, username, fullName, preferredLang }, 
+      webhookUrl
+    );
+    
+    const result = await createAppRuntime(locals).runPromise(runnable);
 
     // Set cookie
-    cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, newSession.id, {
+    cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, result.sessionId, {
       path: '/',
       httpOnly: true,
       secure: import.meta.env.PROD,
       sameSite: 'lax',
-      expires: new Date(expiresAt * 1000),
+      expires: new Date(result.expiresAt * 1000),
     });
 
-    // Notify Discord asynchronously
-    notifyUserRegistration(
-      {
-        username: newUser.username || '',
-        email: newUser.email,
-        fullName: newUser.full_name,
-      },
-      locals.runtime?.env?.DISCORD_WEBHOOK_URL
-    ).catch(console.error);
+    const isJson = request.headers.get('Accept') === 'application/json';
+    if (isJson) {
+      return new Response(JSON.stringify({ success: true, redirect: '/dashboard' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     return redirect('/dashboard', 302);
   } catch (err: any) {
-    return redirect(`/signup?error=${encodeURIComponent(err.message || 'Terjadi kesalahan')}`, 302);
+    const errorMessage = err?.message || 'Terjadi kesalahan';
+    const isJson = request.headers.get('Accept') === 'application/json';
+    if (isJson) {
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return redirect(`/signup?error=${encodeURIComponent(errorMessage)}`, 302);
   }
 };

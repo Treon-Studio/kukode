@@ -1,12 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
-import { desc, eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import SiteCard from '@/components/sites/SiteCard.astro';
 import SponsorCard from '@/components/sites/SponsorCard.astro';
-import { db } from '@/db';
-import { submittedSites, votes } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
 const lang = getLangFromLocals(Astro.locals);
@@ -15,41 +15,16 @@ const t = useTranslations(lang);
 // 1. Fetch static tools
 const staticSites = await getCollection('sites');
 
-// 2. Fetch dynamic tools from Turso
+// 2. Fetch dynamic tools
 const user = (Astro.locals as any).user;
 
-const dbSites = await db
-  .select({
-    id: submittedSites.id,
-    title: submittedSites.title,
-    live_url: submittedSites.live_url,
-    thumbnail_url: submittedSites.thumbnail_url,
-    tags: submittedSites.tags,
-    created_at: submittedSites.created_at,
-  })
-  .from(submittedSites)
-  .where(eq(submittedSites.status, 'approved'))
-  .orderBy(desc(submittedSites.created_at));
-
-// Fetch votes for these sites
-const allDbVotes = await db.select().from(votes);
-
-const dynamicSites = (dbSites || []).map((site: any) => {
-  const siteVotes = allDbVotes.filter((v) => v.site_id === site.id);
-  return {
-    id: site.id,
-    isDynamic: true,
-    data: {
-      live: site.live_url,
-      title: site.title,
-      thumbnail: { url: site.thumbnail_url, alt: site.title },
-      tags: site.tags ? (typeof site.tags === 'string' ? JSON.parse(site.tags) : site.tags) : [],
-    },
-    voteCount: siteVotes.length,
-    voted: siteVotes.some((v: any) => v.user_id === user?.id) || false,
-    createdAt: site.created_at ? new Date(site.created_at).getTime() : 0,
-  };
+const appRuntime = createAppRuntime(Astro.locals);
+const runnable = Effect.gen(function* () {
+  const repo = yield* ISiteRepository;
+  return yield* repo.getApprovedSitesWithVotes(user?.id);
 });
+
+const dynamicSites = await appRuntime.runPromise(runnable);
 
 // Sort dynamic sites by popularity (votes) or recent
 const filterTab = Astro.url.searchParams.get('tab') || 'terbaru';

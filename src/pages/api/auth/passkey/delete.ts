@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import { and, eq } from 'drizzle-orm';
-import { db } from '@/db';
-import { passkeys } from '@/db/schema';
+import { Effect } from 'effect';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAuthRepository } from '@/domain/auth';
 
 export const prerender = false;
 
@@ -21,9 +21,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    await db
-      .delete(passkeys)
-      .where(and(eq(passkeys.id, passkey_id), eq(passkeys.user_id, user.id)));
+    const program = Effect.gen(function* () {
+      const repo = yield* IAuthRepository;
+      yield* repo.deletePasskey(passkey_id, user.id);
+    });
+
+    await createAppRuntime(locals).runPromise(program);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

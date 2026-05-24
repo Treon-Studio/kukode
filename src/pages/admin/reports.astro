@@ -1,8 +1,8 @@
 ---
-import { aliasedTable, desc, eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { comments, profiles, reports, submittedSites } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAdminRepository } from '@/domain/admin';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 
 const user = (Astro.locals as any).user;
@@ -12,40 +12,11 @@ if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/signin');
 }
 
-// Aliases to join profiles table twice
-const authors = aliasedTable(profiles, 'authors');
-const reporters = aliasedTable(profiles, 'reporters');
-
-// Fetch pending reports
-const pendingReports = await db
-  .select({
-    id: reports.id,
-    reason: reports.reason,
-    created_at: reports.created_at,
-    comment: {
-      id: comments.id,
-      content: comments.content,
-    },
-    site: {
-      id: submittedSites.id,
-      title: submittedSites.title,
-    },
-    author: {
-      username: authors.username,
-      full_name: authors.full_name,
-    },
-    reporter: {
-      username: reporters.username,
-      full_name: reporters.full_name,
-    },
-  })
-  .from(reports)
-  .innerJoin(comments, eq(reports.comment_id, comments.id))
-  .innerJoin(submittedSites, eq(comments.site_id, submittedSites.id))
-  .innerJoin(authors, eq(comments.user_id, authors.id))
-  .innerJoin(reporters, eq(reports.reporter_id, reporters.id))
-  .where(eq(reports.status, 'pending'))
-  .orderBy(desc(reports.created_at));
+const appRuntime = createAppRuntime(Astro.locals);
+const pendingReports = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAdminRepository;
+  return yield* repo.getPendingReports();
+}));
 ---
 
 <AdminLayout title="Comment Moderation">

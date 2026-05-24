@@ -2,11 +2,11 @@
 // Get posts from "sites" collection, or Turso database
 
 import { getCollection, render } from 'astro:content';
-import { eq, sql } from 'drizzle-orm';
-import { db } from '@/db';
-import { profiles, submittedSites, votes } from '@/db/schema';
+import { Effect } from 'effect';
 import SitesLayout from '@/layouts/SitesLayout.astro';
-import { recordEvent } from '@/lib/analytics';
+import { recordEventProgram } from '@/domain/analytics';
+import { ISiteRepository } from '@/domain/site';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
 
 const { slug } = Astro.params;
 const user = (Astro.locals as any).user;
@@ -32,25 +32,11 @@ if (staticPage) {
   frontmatter = { ...staticPage.data, id: staticPage.id };
 } else {
   // 2. If not found, check Turso DB
-  const [dbSite] = await db
-    .select({
-      id: submittedSites.id,
-      title: submittedSites.title,
-      description: submittedSites.description,
-      live_url: submittedSites.live_url,
-      thumbnail_url: submittedSites.thumbnail_url,
-      tagline: submittedSites.tagline,
-      views_count: submittedSites.views_count,
-      created_at: submittedSites.created_at,
-      profiles: {
-        username: profiles.username,
-        full_name: profiles.full_name,
-      },
-    })
-    .from(submittedSites)
-    .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
-    .where(eq(submittedSites.id, slug))
-    .limit(1);
+  const appRuntime = createAppRuntime(Astro.locals);
+  const dbSite = await appRuntime.runPromise(Effect.gen(function* () {
+    const repo = yield* ISiteRepository;
+    return yield* repo.getSiteDetailsWithVotes(slug, user?.id);
+  }));
 
   if (!dbSite) {
     return Astro.redirect('/404');
@@ -58,11 +44,8 @@ if (staticPage) {
 
   isDynamic = true;
   siteId = dbSite.id;
-
-  // Fetch votes for this site
-  const siteVotes = await db.select().from(votes).where(eq(votes.site_id, dbSite.id));
-  voteCount = siteVotes.length;
-  voted = user ? siteVotes.some((v) => v.user_id === user.id) : false;
+  voteCount = dbSite.voteCount;
+  voted = dbSite.voted;
 
   // 3. Record view and update view count asynchronously
   const ip =
@@ -74,22 +57,22 @@ if (staticPage) {
   const city = Astro.request.headers.get('cf-ipcity') || 'Unknown';
   const referrer = Astro.request.headers.get('referer') || 'direct';
 
-  recordEvent({
-    siteId: dbSite.id,
-    eventType: 'view',
-    referrer,
-    ip,
-    userId: user?.id,
-    country,
-    city,
-    env: Astro.locals.runtime?.env,
-  }).catch((err) => console.error('[Analytics] Failed to track view:', err));
+  appRuntime.runPromise(
+    recordEventProgram({
+      siteId: dbSite.id,
+      eventType: 'view',
+      referrer,
+      ip,
+      userId: user?.id,
+      country,
+      city,
+    })
+  ).catch((err) => console.error('[Analytics] Failed to track view:', err));
 
-  db.update(submittedSites)
-    .set({ views_count: sql`${submittedSites.views_count} + 1` })
-    .where(eq(submittedSites.id, dbSite.id))
-    .then()
-    .catch();
+  appRuntime.runPromise(Effect.gen(function* () {
+    const repo = yield* ISiteRepository;
+    yield* repo.incrementSiteViews(dbSite.id);
+  })).catch();
 
   // Map dynamic data to SitesLayout expected frontmatter
   frontmatter = {
@@ -102,7 +85,7 @@ if (staticPage) {
       alt: dbSite.title,
     },
     details: [
-      { label: 'Maker', value: `@${dbSite.profiles?.username || 'unknown'}` },
+      { label: 'Maker', value: `@${dbSite.maker_username || 'unknown'}` },
       { label: 'Tagline', value: dbSite.tagline },
       { label: 'Views', value: `${(dbSite.views_count || 0) + 1} views` },
       {

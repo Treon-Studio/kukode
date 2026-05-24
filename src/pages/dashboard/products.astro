@@ -1,10 +1,10 @@
 ---
-import { desc, eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import EmptyState from '@/components/global/EmptyState.astro';
-import { db } from '@/db';
-import { submittedSites } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 
@@ -16,22 +16,11 @@ if (!user) {
   return Astro.redirect('/signin');
 }
 
-// Fetch maker's products
-const mySites = await db
-  .select({
-    id: submittedSites.id,
-    title: submittedSites.title,
-    tagline: submittedSites.tagline,
-    live_url: submittedSites.live_url,
-    thumbnail_url: submittedSites.thumbnail_url,
-    tags: submittedSites.tags,
-    status: submittedSites.status,
-    rejection_reason: submittedSites.rejection_reason,
-    created_at: submittedSites.created_at,
-  })
-  .from(submittedSites)
-  .where(eq(submittedSites.maker_id, user.id))
-  .orderBy(desc(submittedSites.created_at));
+const appRuntime = createAppRuntime(Astro.locals);
+const mySites = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* ISiteRepository;
+  return yield* repo.getCreatorSites(user.id);
+}));
 ---
 
 <DashboardLayout title={lang === 'en' ? 'My Products' : 'Produk Saya'}>

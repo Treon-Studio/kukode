@@ -1,0 +1,22 @@
+diff --git a/node_modules/astro/dist/core/routing/handler.js b/node_modules/astro/dist/core/routing/handler.js
+index abf0cea..e95f359 100644
+--- a/node_modules/astro/dist/core/routing/handler.js
++++ b/node_modules/astro/dist/core/routing/handler.js
+@@ -108,7 +108,7 @@ class AstroHandler {
+           timeStart: state.timeStart
+         });
+         prepareResponse(redirectResponse, { addCookieHeader });
+-        this.#app.pipeline.logger.flush();
++        if (this.#app.pipeline.logger.flush) this.#app.pipeline.logger.flush();
+         return redirectResponse;
+       }
+       if (!this.#app.pipeline.cacheProvider) {
+@@ -161,7 +161,7 @@ class AstroHandler {
+       });
+     }
+     prepareResponse(response, { addCookieHeader });
+-    this.#app.pipeline.logger.flush();
++    if (this.#app.pipeline.logger.flush) this.#app.pipeline.logger.flush();
+     return response;
+   }
+ }

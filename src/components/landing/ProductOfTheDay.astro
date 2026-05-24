@@ -1,42 +1,30 @@
 ---
-import { desc, eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import ArrowupRight from '@/components/fundations/icons/ArrowUpRight.astro';
-import { db } from '@/db';
-import { potdHistory, profiles, submittedSites, votes } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ICronRepository } from '@/domain/cron';
 
 const user = (Astro.locals as any).user;
 
-// Fetch latest POTD entry
-const [latestPOTD] = await db.select().from(potdHistory).orderBy(desc(potdHistory.date)).limit(1);
+const appRuntime = createAppRuntime(Astro.locals);
+const runnable = Effect.gen(function* () {
+  const repo = yield* ICronRepository;
+  return yield* repo.getLatestPOTDDetails(user?.id);
+});
 
+const potdDetails = await appRuntime.runPromise(runnable);
 let site: any = null;
 let voteCount = 0;
 let voted = false;
+let date: string | undefined = undefined;
 
-if (latestPOTD) {
-  const [dbSite] = await db
-    .select({
-      id: submittedSites.id,
-      title: submittedSites.title,
-      tagline: submittedSites.tagline,
-      description: submittedSites.description,
-      live_url: submittedSites.live_url,
-      thumbnail_url: submittedSites.thumbnail_url,
-      maker_username: profiles.username,
-    })
-    .from(submittedSites)
-    .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
-    .where(eq(submittedSites.id, latestPOTD.site_id))
-    .limit(1);
-
-  if (dbSite) {
-    const siteVotes = await db.select().from(votes).where(eq(votes.site_id, dbSite.id));
-    voteCount = siteVotes.length;
-    voted = user ? siteVotes.some((v) => v.user_id === user.id) : false;
-    site = dbSite;
-  }
+if (potdDetails) {
+  site = potdDetails.site;
+  voteCount = potdDetails.voteCount;
+  voted = potdDetails.voted;
+  date = potdDetails.date;
 }
 ---
 
@@ -77,7 +65,7 @@ if (latestPOTD) {
           )}
           <span>•</span>
           <span>
-            Featured on {latestPOTD.date ? new Date(latestPOTD.date).toLocaleDateString('id-ID', {
+            Featured on {date ? new Date(date).toLocaleDateString('id-ID', {
               day: 'numeric',
               month: 'long',
               year: 'numeric'

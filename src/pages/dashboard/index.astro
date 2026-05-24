@@ -1,10 +1,10 @@
 ---
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import EmptyState from '@/components/global/EmptyState.astro';
-import { db } from '@/db';
-import { submittedSites, votes } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 
@@ -14,37 +14,16 @@ const t = useTranslations(lang);
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
 
-// Fetch stats using Drizzle
-const [submittedCountResult] = await db
-  .select({ count: sql<number>`count(*)` })
-  .from(submittedSites)
-  .where(eq(submittedSites.maker_id, user.id));
-const submittedCount = submittedCountResult.count;
+const appRuntime = createAppRuntime(Astro.locals);
+const stats = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* ISiteRepository;
+  return yield* repo.getCreatorDashboardStats(user.id);
+}));
 
-const [approvedCountResult] = await db
-  .select({ count: sql<number>`count(*)` })
-  .from(submittedSites)
-  .where(and(eq(submittedSites.maker_id, user.id), eq(submittedSites.status, 'approved')));
-
-const approvedCount = approvedCountResult.count;
-
-const sites = await db
-  .select({ views_count: submittedSites.views_count, id: submittedSites.id })
-  .from(submittedSites)
-  .where(eq(submittedSites.maker_id, user.id));
-
-let totalViews = 0;
-let totalVotes = 0;
-
-if (sites && sites.length > 0) {
-  totalViews = sites.reduce((sum: number, site: any) => sum + (site.views_count || 0), 0);
-  const siteIds = sites.map((s: any) => s.id);
-  const [voteCountResult] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(votes)
-    .where(inArray(votes.site_id, siteIds));
-  totalVotes = voteCountResult.count || 0;
-}
+const submittedCount = stats.submittedCount;
+const approvedCount = stats.approvedCount;
+const totalViews = stats.totalViews;
+const totalVotes = stats.totalVotes;
 
 // Badge Logic
 let badge = null;

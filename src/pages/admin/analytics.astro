@@ -1,10 +1,10 @@
 ---
-import { desc, eq, sql } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { comments, profiles, purchases, submittedSites, votes } from '@/db/schema';
 import AdminLayout from '@/layouts/AdminLayout.astro';
-import { getPlatformStats } from '@/lib/analytics';
+import { getPlatformStatsProgram } from '@/domain/analytics';
+import { IAdminRepository } from '@/domain/admin';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
 
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
@@ -15,35 +15,23 @@ if (!user || profile?.role !== 'admin') {
 
 // 1. Fetch DAU/MAU from Redis HyperLogLog
 const env = Astro.locals.runtime?.env;
-const { dau, mau } = await getPlatformStats(env);
+const appRuntime = createAppRuntime(env);
+const { dau, mau } = await appRuntime.runPromise(getPlatformStatsProgram());
 
-// 2. Fetch platform aggregates
-const [usersCountResult] = await db.select({ count: sql<number>`count(*)` }).from(profiles);
-const [sitesCountResult] = await db.select({ count: sql<number>`count(*)` }).from(submittedSites);
-const [votesCountResult] = await db.select({ count: sql<number>`count(*)` }).from(votes);
-const [commentsCountResult] = await db.select({ count: sql<number>`count(*)` }).from(comments);
+// 2. Fetch platform aggregates and recent transactions
+const overviewData = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAdminRepository;
+  return yield* repo.getAnalyticsOverview();
+}));
 
-// 3. Fetch total revenue and recent transactions
-const [revenueResult] = await db
-  .select({ total: sql<number>`sum(amount)` })
-  .from(purchases)
-  .where(eq(purchases.status, 'completed'));
-
-const recentTransactions = await db
-  .select({
-    id: purchases.id,
-    amount: purchases.amount,
-    store_slug: purchases.store_slug,
-    status: purchases.status,
-    created_at: purchases.created_at,
-    username: profiles.username,
-  })
-  .from(purchases)
-  .leftJoin(profiles, eq(purchases.user_id, profiles.id))
-  .orderBy(desc(purchases.created_at))
-  .limit(5);
-
-const totalRevenue = revenueResult?.total || 0;
+const {
+  usersCount,
+  sitesCount,
+  votesCount,
+  commentsCount,
+  totalRevenue,
+  recentTransactions,
+} = overviewData;
 ---
 
 <AdminLayout title="Platform Analytics">
@@ -65,22 +53,22 @@ const totalRevenue = revenueResult?.total || 0;
     </div>
     <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
       <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Total Members</span>
-      <span class="text-2xl font-bold text-base-900 block mt-1.5">{usersCountResult?.count || 0}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{usersCount}</span>
     </div>
     <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
       <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Total Submissions</span>
-      <span class="text-2xl font-bold text-base-900 block mt-1.5">{sitesCountResult?.count || 0}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{sitesCount}</span>
     </div>
   </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
     <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
       <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Total Votes</span>
-      <span class="text-2xl font-bold text-base-900 block mt-1.5">{votesCountResult?.count || 0}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{votesCount}</span>
     </div>
     <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm">
       <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Total Comments</span>
-      <span class="text-2xl font-bold text-base-900 block mt-1.5">{commentsCountResult?.count || 0}</span>
+      <span class="text-2xl font-bold text-base-900 block mt-1.5">{commentsCount}</span>
     </div>
     <div class="bg-white border border-base-200 p-5 rounded-2xl shadow-sm col-span-2">
       <span class="text-xs font-semibold text-base-400 uppercase tracking-wider block">Total Completed Revenue</span>

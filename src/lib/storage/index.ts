@@ -1,8 +1,8 @@
 import { Effect } from 'effect';
-import { CloudflareR2StorageAdapterLive } from './adapters/r2';
 import { LocalStorageAdapterLive } from './adapters/local';
 import { MemoryStorageAdapterLive } from './adapters/memory';
-import { StorageAdapter } from './types';
+import { CloudflareR2StorageAdapterLive } from './adapters/r2';
+import type { StorageAdapter } from './types';
 
 export * from './types';
 
@@ -11,7 +11,8 @@ export * from './types';
  */
 export function getStorageLayer(locals: any) {
   const r2Bucket = locals?.runtime?.env?.R2_BUCKET || locals?.runtime?.env?.BUCKET;
-  const publicUrl = locals?.runtime?.env?.STORAGE_PUBLIC_URL || import.meta.env.STORAGE_PUBLIC_URL || '';
+  const publicUrl =
+    locals?.runtime?.env?.STORAGE_PUBLIC_URL || import.meta.env.STORAGE_PUBLIC_URL || '';
 
   if (r2Bucket) {
     return CloudflareR2StorageAdapterLive(r2Bucket, publicUrl);

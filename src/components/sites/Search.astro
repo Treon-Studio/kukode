@@ -1,9 +1,9 @@
 ---
 // Content
 import { getCollection } from 'astro:content';
-import { eq } from 'drizzle-orm';
-import { db } from '@/db';
-import { submittedSites } from '@/db/schema';
+import { Effect } from 'effect';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 
 // 1. Static sites
 const allSites = await getCollection('sites');
@@ -16,14 +16,13 @@ let posts = allSites.map((post) => ({
 
 // 2. Dynamic sites
 try {
-  const dbSites = await db
-    .select({
-      id: submittedSites.id,
-      title: submittedSites.title,
-      tagline: submittedSites.tagline,
-    })
-    .from(submittedSites)
-    .where(eq(submittedSites.status, 'approved'));
+  const appRuntime = createAppRuntime(Astro.locals);
+  const runnable = Effect.gen(function* () {
+    const repo = yield* ISiteRepository;
+    return yield* repo.getApprovedSitesForSearch();
+  });
+
+  const dbSites = await appRuntime.runPromise(runnable);
 
   if (dbSites && dbSites.length > 0) {
     const dynamicPosts = dbSites.map((site) => ({
@@ -104,6 +103,7 @@ import Command from '@/components/fundations/icons/Command.astro';
   window.addEventListener("load", () => {
     // Get references to various elements in the search UI
     const searchButton = document.getElementById("searchButton"); // Button that opens search modal
+    const headerSearchButton = document.getElementById("search-button"); // Header search bar button
     const searchModal = document.getElementById("searchModal"); // Search modal container
     const modalOverlay = document.getElementById("modalOverlay"); // Overlay that closes modal on click
     const searchInput = document.getElementById("searchInput"); // Input field for searching
@@ -176,8 +176,14 @@ import Command from '@/components/fundations/icons/Command.astro';
       searchResults.classList.remove("hidden");
     }
     // Add event listeners to open the search modal
-    searchButton.addEventListener("click", openSearch);
-    searchButton.addEventListener("touchend", openSearch); // For mobile devices
+    if (searchButton) {
+      searchButton.addEventListener("click", openSearch);
+      searchButton.addEventListener("touchend", openSearch); // For mobile devices
+    }
+    if (headerSearchButton) {
+      headerSearchButton.addEventListener("click", openSearch);
+      headerSearchButton.addEventListener("touchend", openSearch);
+    }
     // Add event listeners to close the search modal
     closeSearch.addEventListener("click", closeSearchModal);
     closeSearch.addEventListener("touchend", closeSearchModal);

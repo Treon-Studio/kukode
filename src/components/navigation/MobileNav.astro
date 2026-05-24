@@ -16,18 +16,15 @@ const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
 
 // Centralized navigation links mapped with translation helper
-const links = NAVIGATION_LINKS.map(link => ({
+const links = NAVIGATION_LINKS.map((link) => ({
   href: link.href,
-  text: t(link.translationKey)
+  text: t(link.translationKey),
 }));
 ---
 
 <nav class="fixed inset-x-0 top-0 z-40 backdrop-blur-md bg-white/80 border-b border-base-100 md:hidden">
   <Wrapper variant="standard" class="py-3">
-    <div class="flex items-center justify-between">
-      <a href="/" aria-label="Go to homepage" class="group focus:outline-none">
-        <Logo class="text-base-900" />
-      </a>
+    <div class="flex items-center gap-3">
       <Button
         iconOnly
         size="xs"
@@ -39,6 +36,9 @@ const links = NAVIGATION_LINKS.map(link => ({
       >
         <Burger slot="icon" class="size-4" />
       </Button>
+      <a href="/" aria-label="Go to homepage" class="group focus:outline-none">
+        <Logo class="text-base-900" />
+      </a>
     </div>
   </Wrapper>
   <div class="hidden md:hidden bg-white/95 border-b border-base-100 backdrop-blur-md" data-mobile-nav-panel>
@@ -100,7 +100,7 @@ const links = NAVIGATION_LINKS.map(link => ({
           </>
         ) : (
           <>
-            <Button isLink size="xs" variant="muted" href="/signin" class="shrink-0"
+            <Button isLink size="xs" variant="muted" href="/signin" data-auth-trigger="signin" class="shrink-0"
               >{t('nav.signin')}</Button
             >
             <Button
@@ -108,6 +108,7 @@ const links = NAVIGATION_LINKS.map(link => ({
               size="xs"
               variant="default"
               href="/signup"
+              data-auth-trigger="signup"
               class="shrink-0">{t('nav.signup')}</Button
             >
           </>
@@ -139,6 +140,11 @@ const links = NAVIGATION_LINKS.map(link => ({
       if (!panel.contains(e.target) && !toggle.contains(e.target)) {
         close();
       }
+    });
+    panel.querySelectorAll("[data-auth-trigger]").forEach((el) => {
+      el.addEventListener("click", () => {
+        close();
+      });
     });
   })();
 </script>

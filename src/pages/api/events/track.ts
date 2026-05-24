@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { recordEvent } from '@/lib/analytics';
+import { recordEventProgram } from '@/domain/analytics';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
 import { checkRateLimit } from '@/lib/ratelimit';
 
 export const prerender = false;
@@ -37,16 +38,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const city = request.headers.get('cf-ipcity') || 'Unknown';
 
     // 3. Record event asynchronously
-    await recordEvent({
-      siteId: site_id,
-      eventType: event_type,
-      referrer,
-      ip,
-      userId: user?.id,
-      country,
-      city,
-      env,
-    });
+    const appRuntime = createAppRuntime(locals);
+    await appRuntime.runPromise(
+      recordEventProgram({
+        siteId: site_id,
+        eventType: event_type as "view" | "click",
+        referrer,
+        ip,
+        userId: user?.id,
+        country,
+        city,
+      })
+    );
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

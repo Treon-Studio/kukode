@@ -1,9 +1,9 @@
 ---
-import { desc, eq, inArray } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { profiles, submittedSites } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAdminRepository } from '@/domain/admin';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 
 const user = (Astro.locals as any).user;
@@ -13,39 +13,19 @@ if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/signin');
 }
 
+const appRuntime = createAppRuntime(Astro.locals);
+
 // Fetch pending sites
-const pendingSites = await db
-  .select({
-    id: submittedSites.id,
-    title: submittedSites.title,
-    tagline: submittedSites.tagline,
-    live_url: submittedSites.live_url,
-    thumbnail_url: submittedSites.thumbnail_url,
-    tags: submittedSites.tags,
-    created_at: submittedSites.created_at,
-    profiles: {
-      username: profiles.username,
-      full_name: profiles.full_name,
-    },
-  })
-  .from(submittedSites)
-  .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
-  .where(eq(submittedSites.status, 'pending_review'))
-  .orderBy(desc(submittedSites.created_at));
+const pendingSites = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAdminRepository;
+  return yield* repo.getPendingSites();
+}));
 
 // Fetch recently approved/rejected
-const recentSites = await db
-  .select({
-    id: submittedSites.id,
-    title: submittedSites.title,
-    status: submittedSites.status,
-    rejection_reason: submittedSites.rejection_reason,
-    created_at: submittedSites.created_at,
-  })
-  .from(submittedSites)
-  .where(inArray(submittedSites.status, ['approved', 'rejected']))
-  .orderBy(desc(submittedSites.created_at))
-  .limit(20);
+const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAdminRepository;
+  return yield* repo.getRecentModeratedSites();
+}));
 ---
 
 <AdminLayout title="Product Moderation">

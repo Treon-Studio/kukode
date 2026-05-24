@@ -1,9 +1,9 @@
 ---
-import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { siteEvents, submittedSites, votes } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAnalyticsRepository } from '@/domain/analytics';
 import { getLangFromLocals } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 
@@ -19,74 +19,26 @@ if (!siteId) {
   return Astro.redirect('/dashboard/products');
 }
 
-// 1. Fetch site details and confirm ownership
-const [site] = await db
-  .select()
-  .from(submittedSites)
-  .where(and(eq(submittedSites.id, siteId), eq(submittedSites.maker_id, user.id)))
-  .limit(1);
+const appRuntime = createAppRuntime(Astro.locals);
+const dashboardData = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAnalyticsRepository;
+  return yield* repo.getAnalyticsDashboardData(siteId, user.id);
+}));
 
-if (!site) {
+if (!dashboardData) {
   return Astro.redirect('/dashboard/products');
 }
 
-// 2. Fetch total upvotes
-const siteVotes = await db.select().from(votes).where(eq(votes.site_id, siteId));
-const upvotesCount = siteVotes.length;
-
-// 3. Fetch analytics metrics (views, clicks)
-const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-const [viewsResult] = await db
-  .select({ count: sql<number>`count(*)` })
-  .from(siteEvents)
-  .where(and(eq(siteEvents.site_id, siteId), eq(siteEvents.event_type, 'view')));
-
-const [clicksResult] = await db
-  .select({ count: sql<number>`count(*)` })
-  .from(siteEvents)
-  .where(and(eq(siteEvents.site_id, siteId), eq(siteEvents.event_type, 'click')));
-
-const totalViews = viewsResult?.count || 0;
-const totalClicks = clicksResult?.count || 0;
-const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0.0';
-
-// 4. Fetch top referrers
-const referrers = await db
-  .select({
-    referrer: siteEvents.referrer,
-    count: sql<number>`count(*)`.as('event_count'),
-  })
-  .from(siteEvents)
-  .where(and(eq(siteEvents.site_id, siteId), sql`referrer IS NOT NULL` as any))
-  .groupBy(siteEvents.referrer)
-  .orderBy(desc(sql`event_count`))
-  .limit(6);
-
-// 5. Fetch top locations (country)
-const countries = await db
-  .select({
-    country: siteEvents.country,
-    count: sql<number>`count(*)`.as('event_count'),
-  })
-  .from(siteEvents)
-  .where(and(eq(siteEvents.site_id, siteId), sql`country IS NOT NULL` as any))
-  .groupBy(siteEvents.country)
-  .orderBy(desc(sql`event_count`))
-  .limit(6);
-
-// 6. Fetch daily traffic trends (last 7 days for clean visual layout chart)
-const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-const dailyTrendsRaw = await db
-  .select({
-    day: sql<string>`date(created_at, 'unixepoch')`.as('day'),
-    eventType: siteEvents.event_type,
-    count: sql<number>`count(*)`,
-  })
-  .from(siteEvents)
-  .where(and(eq(siteEvents.site_id, siteId), gt(siteEvents.created_at, sevenDaysAgo)))
-  .groupBy(sql`day`, siteEvents.event_type)
-  .orderBy(sql`day`);
+const {
+  site,
+  upvotesCount,
+  totalViews,
+  totalClicks,
+  ctr,
+  referrers,
+  countries,
+  dailyTrendsRaw
+} = dashboardData;
 
 // Process daily trends into chart structure
 const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -211,15 +163,15 @@ const maxViews = Math.max(...dailyData.map((d) => d.views), 10);
         ) : (
           <div class="space-y-3.5">
             {referrers.map((ref) => {
-              const maxRefVal = Math.max(...referrers.map(r => r.event_count), 1);
-              const percentage = (ref.event_count / maxRefVal) * 100;
+              const maxRefVal = Math.max(...referrers.map(r => r.count), 1);
+              const percentage = (ref.count / maxRefVal) * 100;
               return (
                 <div class="space-y-1">
                   <div class="flex justify-between text-xs font-medium">
                     <span class="text-base-700 truncate max-w-40 font-mono">
                       {ref.referrer === 'direct' ? 'Direct traffic' : ref.referrer}
                     </span>
-                    <span class="text-base-900">{ref.event_count}</span>
+                    <span class="text-base-900">{ref.count}</span>
                   </div>
                   <div class="w-full h-1.5 bg-base-100 rounded-full overflow-hidden">
                     <div class="h-full bg-accent-600 rounded-full" style={`width: ${percentage}%`}></div>
@@ -230,7 +182,7 @@ const maxViews = Math.max(...dailyData.map((d) => d.views), 10);
           </div>
         )}
       </div>
-
+ 
       {/* Top Locations */}
       <div class="bg-white border border-base-200 p-6 rounded-2xl shadow-sm">
         <Text tag="h3" variant="textBase" class="text-base-900 font-semibold mb-4">
@@ -242,15 +194,15 @@ const maxViews = Math.max(...dailyData.map((d) => d.views), 10);
         ) : (
           <div class="space-y-3.5">
             {countries.map((c) => {
-              const maxCountryVal = Math.max(...countries.map(co => co.event_count), 1);
-              const percentage = (c.event_count / maxCountryVal) * 100;
+              const maxCountryVal = Math.max(...countries.map(co => co.count), 1);
+              const percentage = (c.count / maxCountryVal) * 100;
               return (
                 <div class="space-y-1">
                   <div class="flex justify-between text-xs font-medium">
                     <span class="text-base-700 truncate capitalize">
                       {c.country === 'Unknown' ? 'Unknown location' : c.country}
                     </span>
-                    <span class="text-base-900">{c.event_count}</span>
+                    <span class="text-base-900">{c.count}</span>
                   </div>
                   <div class="w-full h-1.5 bg-base-100 rounded-full overflow-hidden">
                     <div class="h-full bg-green-500 rounded-full" style={`width: ${percentage}%`}></div>

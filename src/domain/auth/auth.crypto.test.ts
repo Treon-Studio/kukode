@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { hashPassword, verifyPassword } from './auth-crypto';
-import { AUTH_CONFIG } from './constants';
+import { hashPasswordBase as hashPassword, verifyPasswordBase as verifyPassword } from './auth.crypto';
+import { AUTH_CONFIG } from '@/lib/constants';
 
 describe('Auth Cryptography', () => {
   const plainPassword = 'SuperSecretPassword123';

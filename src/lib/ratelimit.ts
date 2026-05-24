@@ -45,7 +45,7 @@ export function getRatelimit(type: 'auth' | 'action', env: any): Ratelimit | nul
     const config = limiters[type];
     const ratelimit = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(config.limit, config.window),
+      limiter: Ratelimit.slidingWindow(config.limit, config.window as any),
       analytics: true,
       prefix: `@ratelimit/${type}`,
     });

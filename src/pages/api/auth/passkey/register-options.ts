@@ -1,8 +1,8 @@
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
-import { db } from '@/db';
-import { passkeys } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { Effect } from 'effect';
+import { IAuthRepository } from '@/domain/auth';
 
 export const prerender = false;
 
@@ -19,10 +19,12 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const rpID = url.hostname;
 
     // Get user's existing passkeys to exclude them
-    const existing = await db
-      .select({ credential_id: passkeys.credential_id })
-      .from(passkeys)
-      .where(eq(passkeys.user_id, user.id));
+    const program = Effect.gen(function* () {
+      const repo = yield* IAuthRepository;
+      return yield* repo.getPasskeysByUserId(user.id);
+    });
+    
+    const existing = await createAppRuntime(locals).runPromise(program);
 
     const options = await generateRegistrationOptions({
       rpName: 'Kukode',
@@ -32,7 +34,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       userDisplayName: profile?.full_name || profile?.username || user.email,
       excludeCredentials: existing.map((p) => ({
         id: p.credential_id,
-        type: 'public-key',
+        type: 'public-key' as const,
       })),
       authenticatorSelection: {
         residentKey: 'required',

@@ -1,7 +1,8 @@
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import type { APIRoute } from 'astro';
-import { db } from '@/db';
-import { passkeys } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { Effect } from 'effect';
+import { IAuthRepository } from '@/domain/auth';
 
 export const prerender = false;
 
@@ -12,6 +13,14 @@ function arrayBufferToBase64(buffer: Uint8Array): string {
     binary += String.fromCharCode(buffer[i]);
   }
   return btoa(binary);
+}
+
+function base64urlToBase64(base64url: string): string {
+  let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  return base64;
 }
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
@@ -41,19 +50,26 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     });
 
     if (verification.verified && verification.registrationInfo) {
-      const { credentialID, credentialPublicKey, counter } = verification.registrationInfo;
+      const { credential } = verification.registrationInfo;
+      const { id, publicKey, counter } = credential;
 
-      const base64PublicKey = arrayBufferToBase64(credentialPublicKey);
-      const base64CredentialID = arrayBufferToBase64(credentialID);
+      const base64PublicKey = arrayBufferToBase64(publicKey);
+      const base64CredentialID = base64urlToBase64(id);
+      const transports = body.response.transports ? body.response.transports.join(',') : null;
 
-      // Save credential
-      await db.insert(passkeys).values({
-        user_id: user.id,
-        credential_id: base64CredentialID,
-        public_key: base64PublicKey,
-        counter,
-        transports: body.response.transports ? body.response.transports.join(',') : undefined,
+      // Save credential via VSA Effect
+      const program = Effect.gen(function* () {
+        const repo = yield* IAuthRepository;
+        yield* repo.createPasskey({
+          userId: user.id,
+          credentialId: base64CredentialID,
+          publicKey: base64PublicKey,
+          counter,
+          transports,
+        });
       });
+      
+      await createAppRuntime(locals).runPromise(program);
 
       // Clear the challenge cookie
       cookies.delete('passkey_registration_challenge', { path: '/' });

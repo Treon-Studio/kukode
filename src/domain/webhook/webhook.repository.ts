@@ -1,0 +1,13 @@
+import { Context, Effect } from "effect";
+import type { DatabaseError } from "@/shared/errors/infrastructure.errors";
+import type { TUserProfile } from "./webhook.types";
+
+export class IWebhookRepository extends Context.Tag("IWebhookRepository")<
+  IWebhookRepository,
+  {
+    readonly updatePurchaseStatus: (invoiceId: string, status: 'completed' | 'failed') => Effect.Effect<void, DatabaseError>;
+    readonly markSiteAsSponsored: (siteId: string) => Effect.Effect<void, DatabaseError>;
+    readonly getUserProfile: (userId: string) => Effect.Effect<TUserProfile | null, DatabaseError>;
+    readonly getSiteTitle: (siteId: string) => Effect.Effect<string | null, DatabaseError>;
+  }
+>() {}

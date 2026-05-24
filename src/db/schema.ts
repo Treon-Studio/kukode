@@ -45,6 +45,8 @@ export const submittedSites = sqliteTable('submitted_sites', {
   status: text('status').default('pending_review').notNull(), // 'pending_review', 'approved', 'rejected'
   rejection_reason: text('rejection_reason'),
   views_count: integer('views_count').default(0).notNull(),
+  is_sponsored: integer('is_sponsored', { mode: 'boolean' }).default(false).notNull(),
+  sponsored_until: integer('sponsored_until', { mode: 'timestamp' }),
   approved_at: text('approved_at'),
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
 });

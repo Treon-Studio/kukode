@@ -1,8 +1,7 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
-import { db } from '@/db';
-import { passkeys, profiles, sessions } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { passkeyLoginVerifyProgram } from '@/domain/auth';
 import { AUTH_CONFIG } from '@/lib/constants';
 
 export const prerender = false;
@@ -25,7 +24,7 @@ function base64ToArrayBuffer(base64: string): Uint8Array {
   return bytes;
 }
 
-export const POST: APIRoute = async ({ request, cookies }) => {
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const expectedChallenge = cookies.get('passkey_login_challenge')?.value;
 
   if (!expectedChallenge) {
@@ -40,63 +39,45 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const standardID = base64urlToBase64(body.id);
 
-    const [passkey] = await db
-      .select()
-      .from(passkeys)
-      .where(eq(passkeys.credential_id, standardID))
-      .limit(1);
-
-    if (!passkey) {
-      return new Response(JSON.stringify({ error: 'Passkey not found' }), {
-        status: 404,
-      });
-    }
+    const result = await createAppRuntime(locals).runPromise(passkeyLoginVerifyProgram({ standardID }));
+    const { passkey, user } = result;
 
     const verification = await verifyAuthenticationResponse({
       response: body,
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: base64ToArrayBuffer(passkey.credential_id),
-        credentialPublicKey: base64ToArrayBuffer(passkey.public_key),
+      credential: {
+        id: body.id,
+        publicKey: base64ToArrayBuffer(passkey.public_key) as any,
         counter: passkey.counter,
         transports: passkey.transports ? (passkey.transports.split(',') as any[]) : undefined,
       },
     });
 
     if (verification.verified && verification.authenticationInfo) {
-      // Update counter
-      await db
-        .update(passkeys)
-        .set({ counter: verification.authenticationInfo.newCounter })
-        .where(eq(passkeys.id, passkey.id));
-
-      // Get user profile
-      const [user] = await db
-        .select()
-        .from(profiles)
-        .where(eq(profiles.id, passkey.user_id))
-        .limit(1);
-
-      if (!user) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
-          status: 404,
-        });
-      }
-
-      // Create session
-      const expiresAt = Math.floor(Date.now() / 1000) + AUTH_CONFIG.SESSION_DURATION_SECONDS;
-      const [newSession] = await db
-        .insert(sessions)
-        .values({
-          user_id: user.id,
-          expires_at: expiresAt,
+      // Create session and update counter through a second program?
+      // Wait, we need to update counter and create session!
+      // Let's just create a new program `passkeyLoginCompleteProgram` or do it in the route.
+      // Doing it in a program is better! But we already have `IAuthRepository` available via `createAppRuntime(locals).runPromise(Effect.gen(function*() {...}))`.
+      
+      const { Effect } = await import('effect');
+      const { IAuthRepository } = await import('@/domain/auth');
+      
+      const completeProgram = createAppRuntime(locals).runPromise(
+        Effect.gen(function* () {
+          const repo = yield* IAuthRepository;
+          yield* repo.updatePasskeyCounter(passkey.id, verification.authenticationInfo!.newCounter);
+          const expiresAt = Math.floor(Date.now() / 1000) + AUTH_CONFIG.SESSION_DURATION_SECONDS;
+          const session = yield* repo.createSession(user.id, expiresAt);
+          return { session, expiresAt };
         })
-        .returning();
+      );
+      
+      const { session, expiresAt } = await completeProgram;
 
       // Set cookie
-      cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, newSession.id, {
+      cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, session.id, {
         path: '/',
         httpOnly: true,
         secure: import.meta.env.PROD,

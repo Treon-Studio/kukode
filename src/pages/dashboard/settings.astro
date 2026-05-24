@@ -1,21 +1,22 @@
 ---
-import { and, eq, ne } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import UserAvatar from '@/components/global/UserAvatar.astro';
-import { db } from '@/db';
-import { passkeys, profiles } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAuthRepository } from '@/domain/auth';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
-import { Effect } from 'effect';
 import { APP_CONFIG } from '@/lib/constants';
-import { StorageAdapter, runStorageEffect } from '@/lib/storage';
+import { runStorageEffect, StorageAdapter } from '@/lib/storage';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
 
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
+
+const appRuntime = createAppRuntime(Astro.locals);
 
 // Handle form submission
 let successMsg = '';
@@ -31,37 +32,62 @@ if (Astro.request.method === 'POST') {
   const github = formData.get('github')?.toString() || '';
   const avatarFile = formData.get('avatar_file') as File | null;
 
-  // Check username uniqueness (if changed)
-  if (username && username !== profile?.username) {
-    const [existing] = await db
-      .select({ id: profiles.id })
-      .from(profiles)
-      .where(and(eq(profiles.username, username), ne(profiles.id, user.id)))
-      .limit(1);
+  // Validation checks
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+  if (username && !usernameRegex.test(username)) {
+    errorMsg =
+      lang === 'en'
+        ? 'Username can only contain letters, numbers, hyphens, and underscores.'
+        : 'Username hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.';
+  } else if (website && !/^https?:\/\//i.test(website)) {
+    errorMsg =
+      lang === 'en'
+        ? 'Website URL must start with http:// or https://'
+        : 'URL website harus dimulai dengan http:// atau https://';
+  }
 
-    if (existing) {
+  // Check username uniqueness (if changed)
+  if (!errorMsg && username && username !== profile?.username) {
+    const isTaken = await appRuntime.runPromise(Effect.gen(function* () {
+      const repo = yield* IAuthRepository;
+      return yield* repo.checkUsernameTaken(username, user.id);
+    }));
+
+    if (isTaken) {
       errorMsg = t('settings.usernameUsed');
     }
   }
 
   let newAvatarUrl = profile?.avatar_url;
   if (!errorMsg && avatarFile && avatarFile.size > 0) {
-    try {
-      const uploadEffect = StorageAdapter.pipe(
-        Effect.flatMap((storage) => storage.uploadFile(avatarFile, 'avatars'))
-      );
-      const result = await runStorageEffect(uploadEffect, Astro.locals);
-      newAvatarUrl = result.url;
-    } catch (e: any) {
-      errorMsg = e.message || 'Gagal mengupload avatar';
+    if (avatarFile.size > 2 * 1024 * 1024) {
+      errorMsg =
+        lang === 'en'
+          ? 'Avatar size must be less than 2MB.'
+          : 'Ukuran avatar harus kurang dari 2MB.';
+    } else if (!avatarFile.type.startsWith('image/')) {
+      errorMsg =
+        lang === 'en' ? 'Avatar must be an image file.' : 'Avatar harus berupa berkas gambar.';
+    }
+
+    if (!errorMsg) {
+      try {
+        const uploadEffect = StorageAdapter.pipe(
+          Effect.flatMap((storage) => storage.uploadFile(avatarFile, 'avatars'))
+        );
+        const result = await runStorageEffect(uploadEffect, Astro.locals);
+        newAvatarUrl = result.url;
+      } catch (e: any) {
+        errorMsg = e.message || 'Gagal mengupload avatar';
+      }
     }
   }
 
   if (!errorMsg) {
     try {
-      await db
-        .update(profiles)
-        .set({
+      await appRuntime.runPromise(Effect.gen(function* () {
+        const repo = yield* IAuthRepository;
+        yield* repo.updateUserProfile(user.id, {
           full_name: fullName,
           username: username || profile?.username,
           avatar_url: newAvatarUrl,
@@ -69,8 +95,8 @@ if (Astro.request.method === 'POST') {
           website,
           twitter,
           github,
-        })
-        .where(eq(profiles.id, user.id));
+        });
+      }));
 
       successMsg = t('settings.successUpdate');
     } catch (e: any) {
@@ -80,29 +106,21 @@ if (Astro.request.method === 'POST') {
 }
 
 // Re-fetch profile after update
-const [currentProfile] = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
+const currentProfile = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAuthRepository;
+  return yield* repo.getUserProfile(user.id);
+}));
 
 // Fetch user's passkeys
-const userPasskeys = await db
-  .select({
-    id: passkeys.id,
-    created_at: passkeys.created_at,
-  })
-  .from(passkeys)
-  .where(eq(passkeys.user_id, user.id));
+const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAuthRepository;
+  return yield* repo.getUserPasskeys(user.id);
+}));
 ---
 
 <DashboardLayout title="Settings">
-  {successMsg && (
-    <div class="mb-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-      {successMsg}
-    </div>
-  )}
-  {errorMsg && (
-    <div class="mb-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
-      {errorMsg}
-    </div>
-  )}
+  {successMsg && <script define:vars={{ successMsg }}>window.addEventListener('DOMContentLoaded', () => window.toast.success(successMsg))</script>}
+  {errorMsg && <script define:vars={{ errorMsg }}>window.addEventListener('DOMContentLoaded', () => window.toast.error(errorMsg))</script>}
 
   <form method="POST" enctype="multipart/form-data" class="space-y-6 max-w-lg">
     <div>
@@ -344,9 +362,18 @@ const userPasskeys = await db
     deleteBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        if (!confirm(lang === 'en' ? 'Are you sure you want to remove this passkey?' : 'Apakah Anda yakin ingin menghapus passkey ini?')) {
-          return;
-        }
+        
+        const confirmed = await (window as any).confirmModal({
+          title: lang === 'en' ? 'Remove Passkey' : 'Hapus Passkey',
+          message: lang === 'en'
+            ? 'Are you sure you want to remove this passkey? You will no longer be able to use it to sign in.'
+            : 'Apakah Anda yakin ingin menghapus passkey ini? Anda tidak akan dapat menggunakannya lagi untuk masuk.',
+          confirmText: lang === 'en' ? 'Remove' : 'Hapus',
+          cancelText: lang === 'en' ? 'Cancel' : 'Batal',
+          danger: true
+        });
+
+        if (!confirmed) return;
 
         try {
           const res = await fetch('/api/auth/passkey/delete', {
@@ -360,6 +387,10 @@ const userPasskeys = await db
             throw new Error(errData.error || 'Failed to remove');
           }
 
+          (window as any).toast.success(
+            lang === 'en' ? 'Passkey removed successfully' : 'Passkey berhasil dihapus'
+          );
+
           const element = document.getElementById(`pk-${id}`);
           if (element) element.remove();
           
@@ -368,7 +399,7 @@ const userPasskeys = await db
             window.location.reload();
           }
         } catch (err: any) {
-          alert(err.message);
+          (window as any).toast.error(err.message);
         }
       });
     });
@@ -399,7 +430,7 @@ const userPasskeys = await db
           case 'Failure':
             saveBtn.disabled = false;
             saveBtn.textContent = originalSaveText;
-            alert(state.error);
+            (window as any).toast.error(state.error);
             break;
         }
       });

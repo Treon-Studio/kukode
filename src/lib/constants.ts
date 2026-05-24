@@ -59,6 +59,4 @@ export const NAVIGATION_LINKS = [
   { href: '/store/', translationKey: 'nav.store' },
   { href: '/submit/', translationKey: 'nav.submit' },
   { href: '/advertise/', translationKey: 'nav.sponsors' },
-  { href: '/system/overview', translationKey: 'nav.overview' },
-  { href: 'https://treonstudio.com/templates/kukode', translationKey: 'nav.buyKukode' },
 ] as const;

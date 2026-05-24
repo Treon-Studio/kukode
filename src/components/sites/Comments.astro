@@ -1,34 +1,23 @@
 ---
-import { desc, eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import EmptyState from '@/components/global/EmptyState.astro';
 import UserAvatar from '@/components/global/UserAvatar.astro';
-import { db } from '@/db';
-import { comments, profiles } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ICommentsRepository } from '@/domain/comments';
 
 const { siteId } = Astro.props;
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
 
-// Fetch comments using Drizzle
-const dbComments = await db
-  .select({
-    id: comments.id,
-    content: comments.content,
-    user_id: comments.user_id,
-    created_at: comments.created_at,
-    profiles: {
-      username: profiles.username,
-      full_name: profiles.full_name,
-      avatar_url: profiles.avatar_url,
-      role: profiles.role,
-    },
-  })
-  .from(comments)
-  .leftJoin(profiles, eq(comments.user_id, profiles.id))
-  .where(eq(comments.site_id, siteId))
-  .orderBy(desc(comments.created_at));
+const appRuntime = createAppRuntime(Astro.locals);
+const runnable = Effect.gen(function* () {
+  const repo = yield* ICommentsRepository;
+  return yield* repo.getCommentsForSite(siteId);
+});
+
+const dbComments = await appRuntime.runPromise(runnable);
 
 const errorMsg = Astro.url.searchParams.get('error');
 const successMsg = Astro.url.searchParams.get('message');

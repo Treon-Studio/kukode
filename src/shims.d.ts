@@ -1,3 +1,3 @@
 declare module '@lexingtonthemes/seo' {
-  export const AstroSeo: any;
+  export const AstroSeo: unknown;
 }

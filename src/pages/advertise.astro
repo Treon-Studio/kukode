@@ -1,10 +1,10 @@
 ---
-import { eq } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { submittedSites } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
@@ -12,11 +12,11 @@ const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
 
 // Check if sponsored slots are full (max 3 active)
-const sponsoredSites = await db
-  .select()
-  .from(submittedSites)
-  .where(eq(submittedSites.is_sponsored, true));
-const isSlotFull = sponsoredSites.length >= 3;
+const appRuntime = createAppRuntime(Astro.locals);
+const isSlotFull = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* ISiteRepository;
+  return yield* repo.checkSponsoredSlotsFull();
+}));
 
 // Data
 const packages = [

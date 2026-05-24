@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
-import { db } from '@/db';
-import { profiles, sessions } from '@/db/schema';
 import { AUTH_CONFIG } from '@/lib/constants';
-import { notifyUserRegistration } from '@/lib/discord';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { oauthGoogleProgram } from '@/domain/auth';
 
 export const prerender = false;
 
@@ -26,7 +24,8 @@ export const GET: APIRoute = async ({ request, cookies, redirect, locals }) => {
   }
 
   const googleClientId = locals.runtime?.env?.GOOGLE_CLIENT_ID || import.meta.env.GOOGLE_CLIENT_ID;
-  const googleClientSecret = locals.runtime?.env?.GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
+  const googleClientSecret =
+    locals.runtime?.env?.GOOGLE_CLIENT_SECRET || import.meta.env.GOOGLE_CLIENT_SECRET;
 
   if (!googleClientId || !googleClientSecret) {
     return redirect('/signin?error=Google+auth+is+not+configured+properly', 302);
@@ -80,88 +79,30 @@ export const GET: APIRoute = async ({ request, cookies, redirect, locals }) => {
       return redirect('/signin?error=No+email+associated+with+Google+account', 302);
     }
 
-    // 5. Look up user by email in database
-    let [user] = await db.select().from(profiles).where(eq(profiles.email, email)).limit(1);
-    let isNewUser = false;
+    const preferredLang = cookies.get('preferred_lang')?.value || 'en';
+    const webhookUrl = locals.runtime?.env?.DISCORD_WEBHOOK_URL;
 
-    // 6. If user does not exist, automatically sign them up
-    if (!user) {
-      isNewUser = true;
-
-      // Generate a unique username
-      let baseUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      if (baseUsername.length < 3) {
-        baseUsername = 'user';
-      }
-      let username = baseUsername;
-      let isUnique = false;
-      let attempts = 0;
-
-      while (!isUnique && attempts < 10) {
-        const [existingUsername] = await db
-          .select()
-          .from(profiles)
-          .where(eq(profiles.username, username))
-          .limit(1);
-
-        if (!existingUsername) {
-          isUnique = true;
-        } else {
-          const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-          username = `${baseUsername}${randomSuffix}`;
-          attempts++;
-        }
-      }
-
-      // Create a secure dummy password hash for the profile
-      const dummyPasswordHash = `oauth_google_${crypto.randomUUID()}`;
-      const preferredLang = cookies.get('preferred_lang')?.value || 'en';
-
-      [user] = await db
-        .insert(profiles)
-        .values({
-          email,
-          password_hash: dummyPasswordHash,
-          username,
-          full_name: userInfo.name || null,
-          avatar_url: userInfo.picture || null,
-          role: 'user',
-          preferred_lang: preferredLang,
-        })
-        .returning();
-
-      // Send Discord signup notification asynchronously
-      notifyUserRegistration(
-        {
-          username: user.username || '',
-          email: user.email,
-          fullName: user.full_name,
-        },
-        locals.runtime?.env?.DISCORD_WEBHOOK_URL
-      ).catch(console.error);
-    }
-
-    // 7. Create user session (expires in 30 days)
-    const expiresAt = Math.floor(Date.now() / 1000) + AUTH_CONFIG.SESSION_DURATION_SECONDS;
-    const [newSession] = await db
-      .insert(sessions)
-      .values({
-        user_id: user.id,
-        expires_at: expiresAt,
+    // 5. Run the VSA Effect Program
+    const sessionResult = await createAppRuntime(locals).runPromise(
+      oauthGoogleProgram({
+        email,
+        name: userInfo.name,
+        picture: userInfo.picture,
+        preferredLang,
+        webhookUrl
       })
-      .returning();
+    );
 
-    // 8. Set session cookie
-    cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, newSession.id, {
+    // 6. Set session cookie
+    cookies.set(AUTH_CONFIG.COOKIE_SESSION_NAME, sessionResult.sessionId, {
       path: '/',
       httpOnly: true,
       secure: import.meta.env.PROD,
       sameSite: 'lax',
-      expires: new Date(expiresAt * 1000),
+      expires: new Date(sessionResult.expiresAt * 1000),
     });
-
-    // 9. Sync preferred_lang cookie
-    cookies.set('preferred_lang', user.preferred_lang || 'en', {
+    // 7. Sync preferred_lang cookie
+    cookies.set('preferred_lang', sessionResult.preferredLang, {
       path: '/',
       httpOnly: false,
       secure: import.meta.env.PROD,
@@ -172,6 +113,9 @@ export const GET: APIRoute = async ({ request, cookies, redirect, locals }) => {
     return redirect('/dashboard', 302);
   } catch (err: any) {
     console.error('Google OAuth callback error:', err);
-    return redirect(`/signin?error=${encodeURIComponent(err.message || 'OAuth authentication failed')}`, 302);
+    return redirect(
+      `/signin?error=${encodeURIComponent(err.message || 'OAuth authentication failed')}`,
+      302
+    );
   }
 };

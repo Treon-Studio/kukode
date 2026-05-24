@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import { and, eq, sql } from 'drizzle-orm';
-import { db } from '@/db';
-import { submittedSites, votes } from '@/db/schema';
+import { Effect } from 'effect';
+import { voteSiteProgram, SiteRepositoryLive } from '@/domain/site';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
 
 export const prerender = false;
 
@@ -15,55 +15,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { site_id } = await request.json();
 
-    if (!site_id) {
-      return new Response(JSON.stringify({ error: 'site_id required' }), { status: 400 });
-    }
+    const appRuntime = createAppRuntime(locals);
 
-    // Check if maker is trying to vote for their own product
-    const [site] = await db
-      .select({ maker_id: submittedSites.maker_id })
-      .from(submittedSites)
-      .where(eq(submittedSites.id, site_id));
+    const runnable = Effect.provide(
+      voteSiteProgram({ siteId: site_id }, user.id),
+      SiteRepositoryLive
+    );
 
-    if (site && site.maker_id === user.id) {
-      return new Response(
-        JSON.stringify({ error: 'Pembuat produk tidak dapat melakukan upvote' }),
-        {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    const result = await appRuntime.runPromise(runnable);
 
-    // Check existing vote
-    const [existingVote] = await db
-      .select()
-      .from(votes)
-      .where(and(eq(votes.site_id, site_id), eq(votes.user_id, user.id)));
-
-    let voted = false;
-
-    if (existingVote) {
-      // Unvote
-      await db.delete(votes).where(eq(votes.id, existingVote.id));
-      voted = false;
-    } else {
-      // Vote
-      await db.insert(votes).values({ site_id, user_id: user.id });
-      voted = true;
-    }
-
-    // Get new count
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(votes)
-      .where(eq(votes.site_id, site_id));
-
-    return new Response(JSON.stringify({ voted, vote_count: countResult.count }), {
+    return new Response(JSON.stringify({ voted: result.voted, vote_count: result.voteCount }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: err?.message || 'Terjadi kesalahan' }), { 
+      status: err._tag === "MakerCannotVoteError" ? 403 : err._tag === "ValidationError" ? 400 : 500 
+    });
   }
 };

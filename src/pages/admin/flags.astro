@@ -1,9 +1,9 @@
 ---
-import { desc } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { featureFlags } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAdminRepository } from '@/domain/admin';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 
 const user = (Astro.locals as any).user;
@@ -13,7 +13,11 @@ if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/signin');
 }
 
-const flags = await db.select().from(featureFlags).orderBy(desc(featureFlags.created_at));
+const appRuntime = createAppRuntime(Astro.locals);
+const flags = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* IAdminRepository;
+  return yield* repo.getFeatureFlags();
+}));
 ---
 
 <AdminLayout title="Feature Flags">

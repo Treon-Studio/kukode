@@ -1,10 +1,10 @@
 ---
-import { desc, eq, gt, sql } from 'drizzle-orm';
+import { Effect } from 'effect';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import { db } from '@/db';
-import { profiles, submittedSites, votes } from '@/db/schema';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { ISiteRepository } from '@/domain/site';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
@@ -13,52 +13,11 @@ const t = useTranslations(lang);
 
 const filter = Astro.url.searchParams.get('filter') || 'weekly';
 
-// Calculate threshold date
-let dateThreshold: Date | null = null;
-if (filter === 'weekly') {
-  dateThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-} else if (filter === 'monthly') {
-  dateThreshold = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-}
-
-// 1. Fetch approved sites
-const approvedSites = await db
-  .select({
-    id: submittedSites.id,
-    title: submittedSites.title,
-    tagline: submittedSites.tagline,
-    live_url: submittedSites.live_url,
-    thumbnail_url: submittedSites.thumbnail_url,
-    maker_username: profiles.username,
-  })
-  .from(submittedSites)
-  .leftJoin(profiles, eq(submittedSites.maker_id, profiles.id))
-  .where(eq(submittedSites.status, 'approved'));
-
-// 2. Fetch votes count in range
-let votesQuery = db
-  .select({
-    site_id: votes.site_id,
-    count: sql<number>`count(*)`.as('vote_count'),
-  })
-  .from(votes);
-
-if (dateThreshold) {
-  votesQuery = votesQuery.where(gt(votes.created_at, dateThreshold)) as any;
-}
-
-const voteCounts = await votesQuery.groupBy(votes.site_id);
-
-// 3. Map votes to sites and sort
-const rankedSites = approvedSites
-  .map((site) => {
-    const voteInfo = voteCounts.find((v) => v.site_id === site.id);
-    return {
-      ...site,
-      voteCount: voteInfo ? voteInfo.count : 0,
-    };
-  })
-  .sort((a, b) => b.voteCount - a.voteCount);
+const appRuntime = createAppRuntime(Astro.locals);
+const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
+  const repo = yield* ISiteRepository;
+  return yield* repo.getLeaderboard(filter);
+}));
 ---
 
 <BaseLayout

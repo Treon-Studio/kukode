@@ -1,0 +1,241 @@
+---
+const lang = Astro.props.lang || 'en';
+---
+
+<!-- Toast Container -->
+<div id="global-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2.5 w-full max-w-md px-4 pointer-events-none"></div>
+
+<!-- Confirm Modal Markup -->
+<div id="global-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-base-950/40 backdrop-blur-xs transition-opacity duration-300" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="global-confirm-modal-box" class="bg-white border border-base-200 rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl transform scale-95 opacity-0 transition-all duration-300">
+    <div class="flex items-start gap-4">
+      <div id="modal-icon-container" class="size-10 rounded-full shrink-0 flex items-center justify-center bg-red-50 text-red-600 border border-red-100">
+        <svg id="modal-danger-icon" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <svg id="modal-info-icon" class="size-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 id="modal-title" class="text-base font-semibold text-base-900 font-sans">
+          Title
+        </h3>
+        <p id="modal-message" class="text-xs text-base-500 mt-2 leading-relaxed font-sans">
+          Message text goes here.
+        </p>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2.5 mt-6 pt-4 border-t border-base-100">
+      <button
+        type="button"
+        id="modal-cancel-btn"
+        class="px-4 py-2 text-xs font-semibold rounded-lg bg-base-100 text-base-700 hover:bg-base-200 transition duration-200 cursor-pointer font-sans"
+      >
+        Batal
+      </button>
+      <button
+        type="button"
+        id="modal-confirm-btn"
+        class="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-500 transition duration-200 cursor-pointer font-sans shadow-sm"
+      >
+        Konfirmasi
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ lang }}>
+  (() => {
+    // TOAST NOTIFICATION SYSTEM
+    const toastContainer = document.getElementById('global-toast-container');
+
+    const showToast = (message, type = 'info') => {
+      if (!toastContainer) return;
+
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto bg-white border border-base-200/80 rounded-xl p-4 flex gap-3 shadow-lg max-w-sm w-full transition-all duration-300 transform translate-y-6 opacity-0 shrink-0 font-sans`;
+
+      let iconColor = 'text-blue-500 bg-blue-50 border-blue-100';
+      let svgIcon = `
+        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      `;
+
+      if (type === 'success') {
+        iconColor = 'text-green-600 bg-green-50 border-green-100';
+        svgIcon = `
+          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        `;
+      } else if (type === 'error') {
+        iconColor = 'text-red-600 bg-red-50 border-red-100';
+        svgIcon = `
+          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        `;
+      }
+
+      toast.innerHTML = `
+        <div class="size-7 rounded-full shrink-0 flex items-center justify-center border ${iconColor}">
+          ${svgIcon}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-base-700 leading-normal font-medium">${message}</p>
+        </div>
+        <button class="text-base-400 hover:text-base-600 self-start text-xs font-semibold shrink-0 cursor-pointer">&times;</button>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      // Trigger animation frame to guarantee transition applies
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-6', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      });
+
+      // Dismiss helper
+      const dismiss = () => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      };
+
+      // Close button
+      toast.querySelector('button').addEventListener('click', dismiss);
+
+      // Auto dismiss after 4s
+      setTimeout(dismiss, 4000);
+    };
+
+    // Export API globally
+    window.toast = {
+      success: (msg) => showToast(msg, 'success'),
+      error: (msg) => showToast(msg, 'error'),
+      info: (msg) => showToast(msg, 'info'),
+    };
+
+    // Auto-detect message/error from URL search parameters on page load
+    const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get('error');
+    const messageParam = params.get('message');
+    if (errorParam) {
+      setTimeout(() => window.toast.error(errorParam), 100);
+      // Clean query params without reloading page
+      const url = new URL(window.location);
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url);
+    }
+    if (messageParam) {
+      setTimeout(() => window.toast.success(messageParam), 100);
+      const url = new URL(window.location);
+      url.searchParams.delete('message');
+      window.history.replaceState({}, '', url);
+    }
+
+
+    // CONFIRM MODAL SYSTEM
+    const modal = document.getElementById('global-confirm-modal');
+    const modalBox = document.getElementById('global-confirm-modal-box');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    const iconContainer = document.getElementById('modal-icon-container');
+    const dangerIcon = document.getElementById('modal-danger-icon');
+    const infoIcon = document.getElementById('modal-info-icon');
+
+    let resolveConfirm = null;
+
+    const hideModal = () => {
+      if (!modal || !modalBox) return;
+      modalBox.classList.remove('scale-100', 'opacity-100');
+      modalBox.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+      }, 300);
+    };
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        if (resolveConfirm) resolveConfirm(false);
+        hideModal();
+      });
+    }
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => {
+        if (resolveConfirm) resolveConfirm(true);
+        hideModal();
+      });
+    }
+
+    // Modal click backdrop handler
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          if (resolveConfirm) resolveConfirm(false);
+          hideModal();
+        }
+      });
+    }
+
+    // Keyboard ESC handler
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+        if (resolveConfirm) resolveConfirm(false);
+        hideModal();
+      }
+    });
+
+    window.confirmModal = (options = {}) => {
+      const {
+        title = lang === 'en' ? 'Are you sure?' : 'Apakah Anda yakin?',
+        message = '',
+        confirmText = lang === 'en' ? 'Confirm' : 'Konfirmasi',
+        cancelText = lang === 'en' ? 'Cancel' : 'Batal',
+        danger = true,
+      } = options;
+
+      return new Promise((resolve) => {
+        resolveConfirm = resolve;
+
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
+        if (cancelBtn) cancelBtn.textContent = cancelText;
+        if (confirmBtn) {
+          confirmBtn.textContent = confirmText;
+          if (danger) {
+            confirmBtn.className = 'px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-500 transition duration-200 cursor-pointer font-sans shadow-sm';
+            if (iconContainer) {
+              iconContainer.className = 'size-10 rounded-full shrink-0 flex items-center justify-center bg-red-50 text-red-600 border border-red-100';
+            }
+            dangerIcon?.classList.remove('hidden');
+            infoIcon?.classList.add('hidden');
+          } else {
+            confirmBtn.className = 'px-4 py-2 text-xs font-semibold rounded-lg bg-accent-600 text-white hover:bg-accent-500 transition duration-200 cursor-pointer font-sans shadow-sm';
+            if (iconContainer) {
+              iconContainer.className = 'size-10 rounded-full shrink-0 flex items-center justify-center bg-accent-50 text-accent-600 border border-accent-100';
+            }
+            dangerIcon?.classList.add('hidden');
+            infoIcon?.classList.remove('hidden');
+          }
+        }
+
+        if (modal && modalBox) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          // Trigger transition
+          requestAnimationFrame(() => {
+            modalBox.classList.remove('scale-95', 'opacity-0');
+            modalBox.classList.add('scale-100', 'opacity-100');
+          });
+        }
+      });
+    };
+  })();
+</script>

@@ -6,7 +6,7 @@ const allProducts = await getCollection('store');
 
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Text from '@/components/fundations/elements/Text.astro';
-import StoreCard from '@/components/store/StoreCard.astro';
+import StoreCard from '@/domain/store/components/StoreCard.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 

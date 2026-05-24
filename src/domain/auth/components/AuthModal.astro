@@ -308,7 +308,7 @@ const t = useTranslations(lang);
       
       // Footer switcher
       if (footerTextEl) footerTextEl.textContent = t('footerSignup');
-      if (toggleBtn) toggleBtn.textContent = t('toggleSignin');
+      if (toggleBtn) toggleBtn.textContent = t('toggleSignup');
 
       // Hide signup-only inputs
       document.querySelectorAll('.auth-signup-only').forEach(el => el.classList.add('hidden'));
@@ -329,7 +329,7 @@ const t = useTranslations(lang);
 
       // Footer switcher
       if (footerTextEl) footerTextEl.textContent = t('footerSignin');
-      if (toggleBtn) toggleBtn.textContent = t('toggleSignup');
+      if (toggleBtn) toggleBtn.textContent = t('toggleSignin');
 
       // Show signup-only inputs
       document.querySelectorAll('.auth-signup-only').forEach(el => el.classList.remove('hidden'));

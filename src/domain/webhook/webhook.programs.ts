@@ -28,18 +28,15 @@ export const processXenditCallbackProgram = (
     const mailer = yield* IMailerService;
 
     if (payload.status === "PAID") {
-      yield* repo.updatePurchaseStatus(payload.id, "completed");
-
       const parts = payload.external_id.split('_');
+      const siteId = (parts[0] === 'adv') ? parts[3] : undefined;
+
+      // Atomic: update purchase + mark sponsored in one db.transaction
+      yield* repo.completePurchase(payload.id, "completed", siteId);
 
       if (parts[0] === 'adv') {
         const pkg = parts[1] || 'sponsored';
         const userId = parts[2];
-        const siteId = parts[3];
-
-        if (siteId) {
-          yield* repo.markSiteAsSponsored(siteId);
-        }
 
         if (userId) {
           const userProfile = yield* repo.getUserProfile(userId);

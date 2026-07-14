@@ -35,6 +35,26 @@ export const SiteRepositoryLive = Layer.effect(
         },
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error save site" })
       }),
+      saveSiteWithUpgrade: (p, userId) => Effect.tryPromise({
+        try: async () => {
+          return await db.transaction(async (tx) => {
+            const [insertedRow] = await tx.insert(submittedSites).values({
+              maker_id: p.makerId,
+              title: p.title,
+              tagline: p.tagline,
+              description: p.description,
+              live_url: p.liveUrl,
+              thumbnail_url: p.thumbnailUrl,
+              tags: p.tags,
+              status: p.status,
+              approved_at: p.approvedAt,
+            }).returning({ id: submittedSites.id });
+            await tx.update(profiles).set({ role: 'maker' }).where(eq(profiles.id, userId));
+            return insertedRow;
+          });
+        },
+        catch: (e) => new DatabaseError({ cause: e, message: "DB Error save site with upgrade" })
+      }),
       upgradeUserRoleToMaker: (userId) => Effect.tryPromise({
         try: async () => {
           await db.update(profiles).set({ role: 'maker' }).where(eq(profiles.id, userId));
@@ -73,6 +93,21 @@ export const SiteRepositoryLive = Layer.effect(
           return countResult.count;
         },
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error count vote" })
+      }),
+      toggleVote: (userId, siteId) => Effect.tryPromise({
+        try: async () => {
+          return await db.transaction(async (tx) => {
+            const [existingVote] = await tx.select().from(votes).where(and(eq(votes.site_id, siteId), eq(votes.user_id, userId)));
+            if (existingVote) {
+              await tx.delete(votes).where(eq(votes.id, existingVote.id));
+            } else {
+              await tx.insert(votes).values({ site_id: siteId, user_id: userId });
+            }
+            const [countResult] = await tx.select({ count: sql<number>`count(*)` }).from(votes).where(eq(votes.site_id, siteId));
+            return { voted: !existingVote, voteCount: countResult.count };
+          });
+        },
+        catch: (e) => new DatabaseError({ cause: e, message: "DB Error toggle vote" })
       }),
       saveComment: (siteId, userId, content) => Effect.tryPromise({
         try: async () => {

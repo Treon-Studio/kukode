@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const profiles = sqliteTable('profiles', {
   id: text('id')
@@ -62,7 +62,9 @@ export const votes = sqliteTable('votes', {
     .references(() => profiles.id, { onDelete: 'cascade' })
     .notNull(),
   created_at: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
-});
+}, (table) => ({
+  uq_vote: uniqueIndex('uq_votes_user_site').on(table.user_id, table.site_id),
+}));
 
 export const comments = sqliteTable('comments', {
   id: text('id')

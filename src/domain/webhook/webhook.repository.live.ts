@@ -31,6 +31,23 @@ export const WebhookRepositoryLive = Layer.effect(
         },
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error update site sponsor status" })
       }),
+      completePurchase: (invoiceId, status, siteId) => Effect.tryPromise({
+        try: async () => {
+          await db.transaction(async (tx) => {
+            await tx
+              .update(purchases)
+              .set({ status })
+              .where(eq(purchases.xendit_invoice_id, invoiceId));
+            if (siteId) {
+              await tx
+                .update(submittedSites)
+                .set({ is_sponsored: true })
+                .where(eq(submittedSites.id, siteId));
+            }
+          });
+        },
+        catch: (e) => new DatabaseError({ cause: e, message: "DB Error complete purchase" })
+      }),
 
       getUserProfile: (userId) => Effect.tryPromise({
         try: async (): Promise<TUserProfile | null> => {

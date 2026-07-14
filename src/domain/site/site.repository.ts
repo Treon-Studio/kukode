@@ -19,12 +19,15 @@ export class ISiteRepository extends Context.Tag("ISiteRepository")<
     readonly existsByUrl: (url: string) => Effect.Effect<boolean, DatabaseError>;
     readonly saveSite: (params: SaveSiteParams) => Effect.Effect<{ id: string }, DatabaseError>;
     readonly upgradeUserRoleToMaker: (userId: string) => Effect.Effect<void, DatabaseError>;
+    readonly saveSiteWithUpgrade: (params: any, userId: string) => Effect.Effect<{ id: string }, DatabaseError>;
+
     
     readonly findSiteForVote: (siteId: string) => Effect.Effect<{ maker_id: string | null } | undefined, DatabaseError>;
     readonly findVote: (userId: string, siteId: string) => Effect.Effect<{ id: string } | undefined, DatabaseError>;
     readonly saveVote: (userId: string, siteId: string) => Effect.Effect<void, DatabaseError>;
     readonly deleteVote: (voteId: string) => Effect.Effect<void, DatabaseError>;
     readonly countVotes: (siteId: string) => Effect.Effect<number, DatabaseError>;
+    readonly toggleVote: (userId: string, siteId: string) => Effect.Effect<{ voted: boolean; voteCount: number }, DatabaseError>;
     
     readonly saveComment: (siteId: string, userId: string, content: string) => Effect.Effect<void, DatabaseError>;
     readonly getMakerInfoBySiteId: (siteId: string) => Effect.Effect<{

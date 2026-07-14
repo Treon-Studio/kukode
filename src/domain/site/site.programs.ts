@@ -79,22 +79,31 @@ export const submitSiteProgram = (
       }
     }
 
-    // Insert to DB
-    yield* repo.saveSite({
-      makerId: user.id,
-      title: props.title,
-      tagline: props.tagline,
-      description: props.description,
-      liveUrl: props.liveUrl,
-      thumbnailUrl: finalThumbnailUrl,
-      tags,
-      status,
-      approvedAt
-    });
-
-    // Upgrade role
+    // Insert to DB + upgrade role (atomic via db.transaction in saveSiteWithUpgrade)
     if (profile?.role === "user") {
-      yield* repo.upgradeUserRoleToMaker(user.id);
+      yield* repo.saveSiteWithUpgrade({
+        makerId: user.id,
+        title: props.title,
+        tagline: props.tagline,
+        description: props.description,
+        liveUrl: props.liveUrl,
+        thumbnailUrl: finalThumbnailUrl,
+        tags,
+        status,
+        approvedAt
+      }, user.id);
+    } else {
+      yield* repo.saveSite({
+        makerId: user.id,
+        title: props.title,
+        tagline: props.tagline,
+        description: props.description,
+        liveUrl: props.liveUrl,
+        thumbnailUrl: finalThumbnailUrl,
+        tags,
+        status,
+        approvedAt
+      });
     }
 
     // Notifications (Fire and forget style using forkDaemon)
@@ -159,20 +168,9 @@ export const voteSiteProgram = (
       yield* Effect.fail(new MakerCannotVoteError({ message: "Pembuat produk tidak dapat melakukan upvote" }));
     }
 
-    const existingVote = yield* repo.findVote(userId, props.siteId);
-    let voted = false;
-
-    if (existingVote) {
-      yield* repo.deleteVote(existingVote.id);
-      voted = false;
-    } else {
-      yield* repo.saveVote(userId, props.siteId);
-      voted = true;
-    }
-
-    const voteCount = yield* repo.countVotes(props.siteId);
-
-    return { voted, voteCount };
+    // toggleVote wraps find → save/delete → count in a single db.transaction()
+    // eliminating the race condition between read and write.
+    return yield* repo.toggleVote(userId, props.siteId);
   });
 
 export const commentSiteProgram = (

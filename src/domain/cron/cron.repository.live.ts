@@ -86,11 +86,13 @@ export const CronRepositoryLive = Layer.effect(
 
       savePotdWinner: (siteId, date, voteCount) => Effect.tryPromise({
         try: async () => {
-          await db.delete(potdHistory).where(eq(potdHistory.date, date));
-          await db.insert(potdHistory).values({
-            site_id: siteId,
-            date,
-            vote_count: voteCount,
+          await db.transaction(async (tx) => {
+            await tx.delete(potdHistory).where(eq(potdHistory.date, date));
+            await tx.insert(potdHistory).values({
+              site_id: siteId,
+              date,
+              vote_count: voteCount,
+            });
           });
         },
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error save potd winner" })

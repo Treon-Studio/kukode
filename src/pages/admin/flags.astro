@@ -80,6 +80,14 @@ const flags = await appRuntime.runPromise(Effect.gen(function* () {
               />
               <div class="w-11 h-6 bg-base-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-base-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600" />
             </label>
+            <button
+              type="button"
+              data-delete-flag={flag.id}
+              data-flag-name={flag.name}
+              class="text-xs font-medium text-red-500 hover:text-red-700 hover:underline px-2 py-1 rounded transition-colors"
+            >
+              Delete
+            </button>
           </div>
         </div>
       ))}
@@ -124,6 +132,36 @@ const flags = await appRuntime.runPromise(Effect.gen(function* () {
         alert('Gagal mengubah flag: ' + err.message);
       } finally {
         toggle.disabled = false;
+      }
+    });
+  });
+
+  // Delete handler for feature flags
+  document.querySelectorAll('[data-delete-flag]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const flagId = btn.getAttribute('data-delete-flag');
+      const flagName = btn.getAttribute('data-flag-name');
+      if (!flagId || !flagName) return;
+      if (!confirm(`Hapus flag "${flagName}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        const res = await fetch('/api/admin/flags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id: flagId }),
+        });
+
+        if (!res.ok) throw new Error('Failed to delete flag');
+
+        const row = document.querySelector(`[data-flag-row="${flagName}"]`);
+        if (row) row.remove();
+      } catch (err) {
+        alert('Gagal menghapus flag: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Delete';
       }
     });
   });

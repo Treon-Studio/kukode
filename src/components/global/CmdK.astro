@@ -1,0 +1,313 @@
+---
+/**
+ * CmdK.astro — Vanilla-TS command palette (cmdk-style UX).
+ *
+ * Search index is built server-side from Astro content collections +
+ * a static list of in-app pages, then serialized as JSON for the client.
+ * Keyboard: ⌘K / Ctrl+K toggles, ↑/↓ navigates, Enter activates,
+ * Esc closes. Renders the modal markup + an inline script that wires
+ * the behaviour. No React, no extra runtime.
+ */
+import { getCollection } from 'astro:content';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+
+const [posts, sites, store] = await Promise.all([
+  getCollection('posts'),
+  getCollection('sites'),
+  getCollection('store'),
+]);
+
+interface CmdKItem {
+  id: string;
+  title: string;
+  description?: string;
+  href: string;
+  type: 'page' | 'post' | 'site' | 'store';
+}
+
+const staticPages: Omit<CmdKItem, 'id'>[] = [
+  { title: t('nav.overview'), href: '/', type: 'page' },
+  { title: t('about.title'), href: '/about/', type: 'page' },
+  { title: t('nav.leaderboard'), href: '/leaderboard/', type: 'page' },
+  { title: t('nav.submit'), href: '/submit/', type: 'page' },
+  { title: t('nav.blog'), href: '/blog/', type: 'page' },
+  { title: t('nav.store'), href: '/store/', type: 'page' },
+  { title: t('pricing.title'), href: '/pricing/', type: 'page' },
+  { title: 'Advertise', href: '/advertise/', type: 'page' },
+  { title: t('nav.signin'), href: '/signin', type: 'page' },
+  { title: t('nav.signup'), href: '/signup', type: 'page' },
+];
+
+const items: CmdKItem[] = [
+  ...staticPages.map((p, i) => ({ ...p, id: `page-${i}` })),
+  ...posts.map((p) => ({
+    id: `post-${p.id}`,
+    title: p.data.title,
+    description: p.data.description,
+    href: `/blog/posts/${p.id}/`,
+    type: 'post' as const,
+  })),
+  ...sites.map((s) => ({
+    id: `site-${s.id}`,
+    title: s.data.title,
+    description: s.data.tagline,
+    href: `/sites/site/${s.id}/`,
+    type: 'site' as const,
+  })),
+  ...store.map((s) => ({
+    id: `store-${s.id}`,
+    title: s.data.title,
+    description: s.data.description,
+    href: `/store/${s.id}/`,
+    type: 'store' as const,
+  })),
+];
+
+const itemsJson = JSON.stringify(items);
+
+const typeLabel: Record<CmdKItem['type'], string> = {
+  page: t('cmdk.typePage'),
+  post: t('cmdk.typePost'),
+  site: t('cmdk.typeSite'),
+  store: t('cmdk.typeStore'),
+};
+---
+
+<!-- Modal -->
+<div
+  id="cmdk-modal"
+  data-cmdk-modal
+  role="dialog"
+  aria-modal="true"
+  aria-label={t('cmdk.open')}
+  class="fixed inset-0 z-50 hidden items-start justify-center bg-base-950/40 backdrop-blur-xs px-4 pt-[12vh] sm:pt-[18vh]"
+>
+  <div
+    id="cmdk-box"
+    class="w-full max-w-2xl rounded-2xl bg-white border border-base-200 shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
+  >
+    <!-- Search input -->
+    <div class="flex items-center gap-3 px-5 py-4 border-b border-base-200">
+      <svg class="size-5 text-base-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        id="cmdk-input"
+        data-cmdk-input
+        type="text"
+        placeholder={t('cmdk.searchPlaceholder')}
+        aria-label={t('cmdk.search')}
+        autocomplete="off"
+        spellcheck="false"
+        class="flex-1 bg-transparent text-base text-base-900 placeholder:text-base-400 outline-none border-none"
+      />
+      <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-base-500 border border-base-200 bg-base-50">ESC</kbd>
+    </div>
+
+    <!-- Results list -->
+    <ul id="cmdk-list" data-cmdk-list role="listbox" class="flex-1 overflow-y-auto py-2">
+      {items.map((item, idx) => (
+        <li
+          role="option"
+          aria-selected="false"
+          data-cmdk-item
+          data-href={item.href}
+          data-type={item.type}
+          data-index={idx}
+          class="cmdk-item flex items-center gap-3 px-5 py-2.5 cursor-pointer text-base-700 hover:bg-base-50 focus:bg-base-50 transition-colors"
+        >
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-base-100 text-base-500 border border-base-200 w-14 justify-center shrink-0">
+            {typeLabel[item.type]}
+          </span>
+          <span class="flex-1 min-w-0">
+            <span class="block text-sm font-medium text-base-900 truncate">{item.title}</span>
+            {item.description && (
+              <span class="block text-xs text-base-500 truncate">{item.description}</span>
+            )}
+          </span>
+          <svg class="size-4 text-base-300 shrink-0 cmdk-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </li>
+      ))}
+      <li
+        data-cmdk-empty
+        class="hidden px-5 py-12 text-center text-sm text-base-500"
+      >
+        {t('cmdk.noResults')}
+      </li>
+    </ul>
+
+    <!-- Footer hints -->
+    <div class="flex items-center gap-4 px-5 py-2.5 border-t border-base-200 bg-base-50/50 text-[10px] text-base-500">
+      <span class="inline-flex items-center gap-1.5">
+        <kbd class="px-1 rounded font-mono bg-white border border-base-200">↑↓</kbd>
+        {t('cmdk.hintNavigate')}
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <kbd class="px-1 rounded font-mono bg-white border border-base-200">↵</kbd>
+        {t('cmdk.hintSelect')}
+      </span>
+      <span class="inline-flex items-center gap-1.5 ml-auto">
+        <kbd class="px-1 rounded font-mono bg-white border border-base-200">esc</kbd>
+        {t('cmdk.hintClose')}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Search index payload -->
+<script
+  type="application/json"
+  id="cmdk-data"
+  is:inline
+  set:html={itemsJson}
+/>
+
+<script is:inline>
+  (() => {
+    const modal = document.getElementById('cmdk-modal');
+    const box = document.getElementById('cmdk-box');
+    const input = document.getElementById('cmdk-input');
+    const list = document.getElementById('cmdk-list');
+    const empty = list && list.querySelector('[data-cmdk-empty]');
+    const items = list ? Array.from(list.querySelectorAll('[data-cmdk-item]')) : [];
+    const triggers = document.querySelectorAll('[data-cmdk-trigger]');
+
+    if (!modal || !input || !list || items.length === 0) return;
+
+    let activeIndex = 0;
+    let lastFocus = null;
+
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+    const cmdLabel = isMac ? '⌘K' : 'Ctrl+K';
+
+    function open() {
+      lastFocus = document.activeElement;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      activeIndex = 0;
+      highlight();
+      setTimeout(() => input.focus(), 0);
+      window.dispatchEvent(new CustomEvent('cmdk:open'));
+    }
+
+    function close() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+      input.value = '';
+      filter('');
+      if (lastFocus && typeof lastFocus.focus === 'function') {
+        lastFocus.focus();
+      }
+      window.dispatchEvent(new CustomEvent('cmdk:close'));
+    }
+
+    function visible() {
+      return items.filter((el) => !el.classList.contains('cmdk-hidden'));
+    }
+
+    function highlight() {
+      const v = visible();
+      items.forEach((el) => el.classList.remove('cmdk-active'));
+      if (v.length === 0) {
+        if (empty) empty.classList.remove('hidden');
+        return;
+      }
+      if (empty) empty.classList.add('hidden');
+      if (activeIndex >= v.length) activeIndex = 0;
+      if (activeIndex < 0) activeIndex = v.length - 1;
+      const target = v[activeIndex];
+      if (!target) return;
+      target.classList.add('cmdk-active');
+      target.setAttribute('aria-selected', 'true');
+      target.scrollIntoView({ block: 'nearest' });
+      v.forEach((el, i) => el.setAttribute('aria-selected', i === activeIndex ? 'true' : 'false'));
+    }
+
+    function filter(q) {
+      const needle = q.toLowerCase().trim();
+      let anyMatch = false;
+      items.forEach((el) => {
+        const text = (el.textContent || '').toLowerCase();
+        const show = !needle || text.includes(needle);
+        el.classList.toggle('cmdk-hidden', !show);
+        if (show) anyMatch = true;
+      });
+      activeIndex = 0;
+      highlight();
+    }
+
+    // Open / close wiring
+    triggers.forEach((t) => t.addEventListener('click', (e) => { e.preventDefault(); open(); }));
+
+    // Keyboard shortcut ⌘K / Ctrl+K
+    document.addEventListener('keydown', (e) => {
+      const isToggle = (e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K');
+      if (isToggle) {
+        e.preventDefault();
+        if (modal.classList.contains('hidden')) open();
+        else close();
+        return;
+      }
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (modal.classList.contains('hidden')) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, visible().length - 1);
+        highlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+        highlight();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = visible();
+        if (v[activeIndex]) v[activeIndex].click();
+      }
+    });
+
+    // Click on item → navigate
+    items.forEach((el) => {
+      el.addEventListener('click', (e) => {
+        if (e.metaKey || e.ctrlKey) return; // let ⌘-click open in new tab
+        e.preventDefault();
+        const href = el.getAttribute('data-href');
+        if (href) window.location.href = href;
+      });
+    });
+
+    // Live filter
+    input.addEventListener('input', () => filter(input.value));
+
+    // Click on backdrop closes
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+
+    // Expose for debugging / external triggers
+    window.__cmdk = { open, close };
+  })();
+</script>
+
+<style is:global>
+  /* Scoped cmdk item states — kept here so the styles are colocated. */
+  [data-cmdk-item].cmdk-hidden { display: none !important; }
+  [data-cmdk-item].cmdk-active {
+    background-color: rgb(var(--color-accent-50, 240 244 255));
+    color: rgb(var(--color-accent-700, 67 56 202));
+  }
+  [data-cmdk-item].cmdk-active .cmdk-arrow { color: rgb(var(--color-accent-600, 79 70 229)); }
+  [data-cmdk-item] .cmdk-arrow { transition: transform 150ms ease; }
+  [data-cmdk-item]:hover .cmdk-arrow,
+  [data-cmdk-item].cmdk-active .cmdk-arrow { transform: translateX(2px); }
+</style>

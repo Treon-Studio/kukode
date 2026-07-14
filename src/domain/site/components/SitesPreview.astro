@@ -18,13 +18,19 @@ const staticSites = await getCollection('sites');
 // 2. Fetch dynamic tools
 const user = (Astro.locals as any).user;
 
-const appRuntime = createAppRuntime(Astro.locals);
-const runnable = Effect.gen(function* () {
-  const repo = yield* ISiteRepository;
-  return yield* repo.getApprovedSitesWithVotes(user?.id);
-});
+let dynamicSites: any[] = [];
+try {
+  const appRuntime = createAppRuntime(Astro.locals);
+  const runnable = Effect.gen(function* () {
+    const repo = yield* ISiteRepository;
+    return yield* repo.getApprovedSitesWithVotes(user?.id);
+  });
 
-const dynamicSites = await appRuntime.runPromise(runnable);
+  dynamicSites = await appRuntime.runPromise(runnable);
+} catch (e) {
+  console.error('[SitesPreview] Failed to fetch dynamic sites:', e);
+  dynamicSites = [];
+}
 
 // Sort dynamic sites by popularity (votes) or recent
 const filterTab = Astro.url.searchParams.get('tab') || 'terbaru';

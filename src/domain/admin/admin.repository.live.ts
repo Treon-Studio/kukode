@@ -162,11 +162,13 @@ export const AdminRepositoryLive = Layer.effect(
             .select({
               id: submittedSites.id,
               title: submittedSites.title,
+              description: submittedSites.description,
               tagline: submittedSites.tagline,
               live_url: submittedSites.live_url,
               thumbnail_url: submittedSites.thumbnail_url,
               tags: submittedSites.tags,
               created_at: submittedSites.created_at,
+              views_count: submittedSites.views_count,
               profiles: {
                 username: profiles.username,
                 full_name: profiles.full_name,
@@ -198,20 +200,44 @@ export const AdminRepositoryLive = Layer.effect(
         },
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error get recent moderated sites" })
       }),
-      getAnalyticsOverview: () => Effect.tryPromise({
+      getAnalyticsOverview: (opts) => Effect.tryPromise({
         try: async () => {
-          const { sql, desc } = await import("drizzle-orm");
+          const { sql, desc, and, gte, lte } = await import("drizzle-orm");
           const { purchases, votes } = await import("@/db/schema");
-          
+
+          const startDate = opts?.startDate;
+          const endDate = opts?.endDate;
+          const rangeFilter = startDate || endDate
+            ? and(
+                startDate ? gte(votes.created_at, startDate) : undefined,
+                endDate ? lte(votes.created_at, endDate) : undefined,
+              )
+            : undefined;
+
           const [usersCountResult] = await db.select({ count: sql<number>`count(*)` }).from(profiles);
           const [sitesCountResult] = await db.select({ count: sql<number>`count(*)` }).from(submittedSites);
-          const [votesCountResult] = await db.select({ count: sql<number>`count(*)` }).from(votes);
+          const [approvedSitesCountResult] = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(submittedSites)
+            .where(eq(submittedSites.status, 'approved'));
+          const votesQuery = rangeFilter ? db.select({ count: sql<number>`count(*)` }).from(votes).where(rangeFilter) : db.select({ count: sql<number>`count(*)` }).from(votes);
+          const [votesCountResult] = await votesQuery;
           const [commentsCountResult] = await db.select({ count: sql<number>`count(*)` }).from(comments);
 
+          const purchaseRange = startDate || endDate
+            ? and(
+                startDate ? gte(purchases.created_at, startDate) : undefined,
+                endDate ? lte(purchases.created_at, endDate) : undefined,
+              )
+            : undefined;
           const [revenueResult] = await db
             .select({ total: sql<number>`sum(amount)` })
             .from(purchases)
-            .where(eq(purchases.status, 'completed'));
+            .where(
+              purchaseRange
+                ? and(eq(purchases.status, 'completed'), purchaseRange)
+                : eq(purchases.status, 'completed')
+            );
 
           const recentTransactions = await db
             .select({
@@ -224,12 +250,14 @@ export const AdminRepositoryLive = Layer.effect(
             })
             .from(purchases)
             .leftJoin(profiles, eq(purchases.user_id, profiles.id))
+            .where(purchaseRange)
             .orderBy(desc(purchases.created_at))
             .limit(5);
 
           return {
             usersCount: usersCountResult?.count || 0,
             sitesCount: sitesCountResult?.count || 0,
+            approvedSitesCount: approvedSitesCountResult?.count || 0,
             votesCount: votesCountResult?.count || 0,
             commentsCount: commentsCountResult?.count || 0,
             totalRevenue: revenueResult?.total || 0,

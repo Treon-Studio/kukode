@@ -1,5 +1,6 @@
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
+import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
@@ -29,5 +30,5 @@ export default defineConfig({
     drafts: true,
   },
   site: 'https://kukode.treonstudio.com',
-  integrations: [sitemap(), mdx()],
+  integrations: [sitemap(), mdx(), react()],
 });

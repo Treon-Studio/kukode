@@ -44,8 +44,9 @@ const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
       <div class="space-y-4">
         {pendingSites.map((site: any) => (
           <div
-            class="rounded-lg border border-base-200 p-4 flex gap-4"
+            class="rounded-lg border border-base-200 p-4 flex gap-4 cursor-pointer"
             data-product-row={site.id}
+            data-view-product={site.id}
           >
             {site.thumbnail_url && (
               <img

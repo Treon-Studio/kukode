@@ -8,7 +8,7 @@ import {
   SponsorLimitReachedError 
 } from "./store.errors";
 import type { DatabaseError, HttpError } from "@/shared/errors/infrastructure.errors";
-import type { TCreateStoreInvoiceProps, TCreateAdInvoiceProps } from "./store.types";
+import type { TCreateStoreInvoiceProps, TCreateAdInvoiceProps, TCreateSubscribeProps } from "./store.types";
 
 export const createStoreInvoiceProgram = (
   props: TCreateStoreInvoiceProps,
@@ -120,6 +120,57 @@ export const createAdInvoiceProgram = (
     yield* repo.recordPurchase({
       userId: user.id,
       storeSlug: `adv_${props.pkg}`,
+      xenditInvoiceId: invoice.id,
+      amount: price,
+      status: "pending",
+    });
+
+    return invoice.invoice_url;
+  });
+
+const PLAN_PRICES: Record<string, number> = {
+  team: 900,
+};
+
+export const createSubscriptionProgram = (
+  props: TCreateSubscribeProps,
+  user: any,
+  origin: string,
+  secretKey: string | undefined
+): Effect.Effect<
+  string,
+  ValidationError | DatabaseError | HttpError,
+  IStoreRepository | IPaymentService
+> =>
+  Effect.gen(function* () {
+    const repo = yield* IStoreRepository;
+    const payment = yield* IPaymentService;
+
+    const price = PLAN_PRICES[props.plan];
+    if (!price) {
+      yield* Effect.fail(new ValidationError({ message: `Invalid plan: ${props.plan}` }));
+    }
+
+    if (!secretKey) {
+      yield* Effect.fail(new ValidationError({ message: "Payment gateway key is not configured" }));
+    }
+
+    const timestamp = Date.now();
+    const externalId = `sub_${props.plan}_${user.id}_${timestamp}`;
+
+    const invoice = yield* payment.createInvoice({
+      externalId,
+      amount: price,
+      payerEmail: user.email,
+      description: `Kukode ${props.plan} subscription`,
+      successRedirectUrl: `${origin}/dashboard?subscription=success&plan=${props.plan}`,
+      failureRedirectUrl: `${origin}/pricing?subscription=failed&plan=${props.plan}`,
+      currency: "USD",
+    }, secretKey);
+
+    yield* repo.recordPurchase({
+      userId: user.id,
+      storeSlug: `sub_${props.plan}`,
       xenditInvoiceId: invoice.id,
       amount: price,
       status: "pending",

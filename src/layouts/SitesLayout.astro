@@ -11,7 +11,6 @@ import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import ArrowupRight from '@/components/fundations/icons/ArrowUpRight.astro';
-import Comments from '@/domain/comments/components/Comments.astro';
 import SiteCard from '@/domain/site/components/SiteCard.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
@@ -122,9 +121,7 @@ const seoProps = {
         )}
       </div>
 
-      {/* Comments Section */}
-      <hr class="border-base-100 my-12" />
-      <Comments siteId={frontmatter.id} />
+      {/* Comments Section — DisqusClone is mounted by the page via slot */}
     </Wrapper>
   </section>
 

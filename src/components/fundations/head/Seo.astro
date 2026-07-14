@@ -1,12 +1,15 @@
 ---
 import { AstroSeo } from '@lexingtonthemes/seo';
 
+import JsonLd from './JsonLd.astro';
 import { APP_CONFIG } from '@/lib/constants';
+import { supportedLangCodes, languages } from '@/i18n/translations';
 
 const { title, description, image, url } = Astro.props;
 
-const defaultTitle = 'Kukode';
-const defaultDesc = 'Kukode - Platform pengembangan web modern';
+const defaultTitle = 'Kukode — A curated directory of production-grade websites';
+const defaultDesc =
+  'Kukode is a community-driven directory of production websites, design systems, and Astro templates reviewed by editors and curated for designers and developers.';
 const defaultImage = '/og-image.jpg';
 const defaultUrl = '/';
 
@@ -29,6 +32,18 @@ let pageUrl = url || defaultUrl;
 if (pageUrl.startsWith('/')) {
   pageUrl = `${APP_CONFIG.BASE_URL}${pageUrl}`;
 }
+
+// Build hreflang alternates for every supported locale (plus x-default).
+const stripLocale = (u: string) => u.replace(/[?&]lang=[a-z]{2,3}(&|$)/, '');
+const baseUrl = stripLocale(pageUrl);
+const hreflangs = [
+  ...supportedLangCodes.map((code) => ({
+    lang: code,
+    label: languages[code],
+    href: `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}lang=${code}`,
+  })),
+  { lang: 'x-default', label: 'Default', href: baseUrl },
+];
 ---
 
 <AstroSeo
@@ -45,26 +60,65 @@ if (pageUrl.startsWith('/')) {
         width: 1200,
         height: 630,
         alt: pageTitle,
-        type: "image/jpeg",
+        type: 'image/jpeg',
       },
     ],
-    site_name: "Kukode",
-    type: "website",
-    locale: "en_US",
+    site_name: 'Kukode',
+    type: 'website',
+    locale: 'en_US',
   }}
   twitter={{
-    handle: "@kukode",
-    site: "@kukode",
-    cardType: "summary_large_image",
+    handle: '@kukode',
+    site: '@kukode',
+    cardType: 'summary_large_image',
   }}
   additionalMetaTags={[
+    { name: 'robots', content: 'index, follow' },
+    { name: 'googlebot', content: 'index, follow' },
+  ]}
+/>
+
+<!-- hreflang alternates for AI-search locale attribution (5 locales + x-default) -->
+{hreflangs.map((alt) => (
+  <link rel="alternate" hreflang={alt.lang} href={alt.href} />
+))}
+
+<!-- Schema.org Organization + WebSite (with SearchAction for /blog/) -->
+<JsonLd
+  graph
+  data={[
     {
-      name: "robots",
-      content: "index, follow",
+      '@type': 'Organization',
+      '@id': `${APP_CONFIG.BASE_URL}/#organization`,
+      name: 'Kukode',
+      url: APP_CONFIG.BASE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${APP_CONFIG.BASE_URL}/icon.svg`,
+        width: 512,
+        height: 512,
+      },
+      description: pageDesc,
+      sameAs: [
+        'https://twitter.com/kukode',
+        // Add LinkedIn / GitHub / YouTube here once those profiles exist.
+      ],
     },
     {
-      name: "googlebot",
-      content: "index, follow",
+      '@type': 'WebSite',
+      '@id': `${APP_CONFIG.BASE_URL}/#website`,
+      url: APP_CONFIG.BASE_URL,
+      name: 'Kukode',
+      inLanguage: supportedLangCodes,
+      publisher: { '@id': `${APP_CONFIG.BASE_URL}/#organization` },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${APP_CONFIG.BASE_URL}/blog/?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
     },
   ]}
 />

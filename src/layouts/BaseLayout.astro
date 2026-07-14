@@ -1,5 +1,6 @@
 ---
 import BaseHead from '@/components/fundations/head/BaseHead.astro';
+import CmdK from '@/components/global/CmdK.astro';
 import Footer from '@/components/global/Footer.astro';
 import GlobalInteractions from '@/components/global/GlobalInteractions.astro';
 import AuthModal from '@/domain/auth/components/AuthModal.astro';
@@ -39,5 +40,6 @@ const lang = getLangFromLocals(Astro.locals);
     {!hideFooter && <Footer />}
     <GlobalInteractions lang={lang} />
     <AuthModal />
+    <CmdK />
   </body>
 </html>

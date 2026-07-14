@@ -90,12 +90,14 @@ const posts = defineCollection({
     z.object({
       title: z.string(),
       pubDate: z.date(),
+      lastmod: z.date().optional(),
       description: z.string(),
       image: z.object({
         url: image(),
         alt: z.string(),
       }),
       tags: z.array(z.string()),
+      author: z.string().optional(),
     }),
 });
 

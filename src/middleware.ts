@@ -2,8 +2,14 @@ import { defineMiddleware } from 'astro:middleware';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { profiles, sessions } from '@/db/schema';
+import { supportedLangCodes } from '@/i18n/translations';
+import { useTranslations } from '@/i18n/utils';
 import { AUTH_CONFIG } from '@/lib/constants';
 import { checkRateLimit } from '@/lib/ratelimit';
+
+const SUPPORTED = new Set<string>(supportedLangCodes);
+const isSupportedLang = (code: string | undefined | null): code is (typeof supportedLangCodes)[number] =>
+  !!code && SUPPORTED.has(code);
 
 /**
  * Astro middleware — runs on every server-rendered request.
@@ -17,9 +23,9 @@ export const onRequest = defineMiddleware(
     // Detect preferred language from query param
     const langQuery = url.searchParams.get('lang');
     let hasExplicitLangQuery = false;
-    let lang = 'en';
+    let lang: (typeof supportedLangCodes)[number] = 'en';
 
-    if (langQuery === 'en' || langQuery === 'id') {
+    if (isSupportedLang(langQuery)) {
       hasExplicitLangQuery = true;
       lang = langQuery;
       cookies.set('preferred_lang', lang, {
@@ -30,12 +36,11 @@ export const onRequest = defineMiddleware(
         expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       });
     } else {
-      lang = cookies.get('preferred_lang')?.value || 'en';
-      if (lang !== 'en' && lang !== 'id') {
-        lang = 'en';
-      }
+      const cookieLang = cookies.get('preferred_lang')?.value;
+      lang = isSupportedLang(cookieLang) ? cookieLang : 'en';
     }
     (locals as any).lang = lang;
+    const t = useTranslations(lang);
 
     const sessionId = cookies.get(AUTH_CONFIG.COOKIE_SESSION_NAME)?.value;
 
@@ -82,7 +87,7 @@ export const onRequest = defineMiddleware(
             } else {
               // Sync cookie with database preference if they differ
               const dbLang = sessionWithUser.user.preferred_lang;
-              if (dbLang && dbLang !== lang && (dbLang === 'en' || dbLang === 'id')) {
+              if (dbLang && dbLang !== lang && isSupportedLang(dbLang)) {
                 lang = dbLang;
                 (locals as any).lang = lang;
                 cookies.set('preferred_lang', lang, {
@@ -138,10 +143,7 @@ export const onRequest = defineMiddleware(
 
         if (limitResult && !limitResult.success) {
           if (isRedirectAction) {
-            const errorMsg =
-              lang === 'id'
-                ? 'Terlalu banyak permintaan. Silakan coba beberapa saat lagi.'
-                : 'Too many requests. Please try again later.';
+            const errorMsg = t('rateLimit.tooMany');
 
             let targetRedirect = '/';
             if (pathname.startsWith('/api/auth/signup')) {
@@ -169,10 +171,7 @@ export const onRequest = defineMiddleware(
             // For JSON endpoints (e.g. /api/sites/vote)
             return new Response(
               JSON.stringify({
-                error:
-                  lang === 'id'
-                    ? 'Terlalu banyak permintaan. Silakan coba beberapa saat lagi.'
-                    : 'Too many requests. Please try again later.',
+                error: t('rateLimit.tooMany'),
               }),
               {
                 status: 429,

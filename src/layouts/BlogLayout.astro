@@ -16,11 +16,25 @@ import BlogCard from '@/components/blog/BlogCard.astro';
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
 import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
+import JsonLd from '@/components/fundations/head/JsonLd.astro';
+import { APP_CONFIG } from '@/lib/constants';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
+
+const postUrl = `${APP_CONFIG.BASE_URL}/blog/posts/${Astro.params.slug}/`;
+// `frontmatter.image.url` is an `ImageMetadata` object (resolved by the
+// content collection's `image()` helper). Its `.src` is the public URL.
+const rawImage = frontmatter.image?.url;
+const postImage = (() => {
+  if (!rawImage) return `${APP_CONFIG.BASE_URL}/og-image.jpg`;
+  const src = typeof rawImage === 'string' ? rawImage : (rawImage as { src?: string }).src;
+  if (!src) return `${APP_CONFIG.BASE_URL}/og-image.jpg`;
+  return src.startsWith('http') ? src : `${APP_CONFIG.BASE_URL}${src}`;
+})();
+const datePublished = new Date(frontmatter.pubDate).toISOString();
 ---
 
 <BaseLayout
@@ -31,6 +45,39 @@ const t = useTranslations(lang);
     url: `/blog/posts/${Astro.params.slug}/`,
   }}
 >
+  <!-- Article JSON-LD for AI/SEO citability -->
+  <JsonLd
+    data={{
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: frontmatter.title,
+      description: frontmatter.description,
+      image: postImage,
+      datePublished,
+      dateModified: frontmatter.lastmod
+        ? new Date(frontmatter.lastmod).toISOString()
+        : datePublished,
+      author: {
+        '@type': 'Organization',
+        name: 'Kukode',
+        url: APP_CONFIG.BASE_URL,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Kukode',
+        logo: {
+          '@type': 'ImageObject',
+          url: `${APP_CONFIG.BASE_URL}/icon.svg`,
+        },
+      },
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': postUrl,
+      },
+      keywords: frontmatter.tags?.join(', '),
+      inLanguage: lang,
+    }}
+  />
   <section>
     <Wrapper variant="standard" class="py-24 lg:pt-48">
       <div class="text-balance">

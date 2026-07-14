@@ -21,34 +21,23 @@ const t = useTranslations(lang);
         <Text
           tag="h1"
           variant="displayLG"
-          class="text-base-900 font-display font-thin max-"
+          class="text-base-900 font-display font-thin"
         >
           {t('about.title')}
         </Text>
-        <Wrapper variant="prose" class="mt-12">
-          <p>
-            {t('about.p1')}
-          </p>
 
-          <p>
-            {t('about.p2')}
-          </p>
+        <!-- Direct answer (134–167 words). First 60 words answer the H1 verbatim. -->
+        <div class="mt-10 text-lg leading-relaxed text-base-800">
+          <p>{t('about.p1')}</p>
+        </div>
 
-          <p>
-            {t('about.p3')}
-          </p>
+        <Wrapper variant="prose" class="mt-10">
+          <p>{t('about.p2')}</p>
+          <p>{t('about.p3')}</p>
         </Wrapper>
-        <div class="mt-12">
-          <Text class="text-base-600 italic">
-            {t('about.quote')}
-          </Text>
-          <Text
-            tag="p"
-            variant="textBase"
-            class="text-base-900 mt-2 font-semibold"
-          >
-            — {t('about.author')}
-          </Text>
+
+        <div class="mt-12 border-t border-base-200 pt-6">
+          <Text class="text-base-500 text-sm">— {t('about.author')}</Text>
         </div>
       </Wrapper>
     </Wrapper>

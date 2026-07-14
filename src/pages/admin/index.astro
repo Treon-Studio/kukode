@@ -1,6 +1,29 @@
 ---
+import { Effect } from 'effect';
 import Text from '@/components/fundations/elements/Text.astro';
+import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { IAdminRepository } from '@/domain/admin';
 import AdminLayout from '@/layouts/AdminLayout.astro';
+
+const user = (Astro.locals as any).user;
+const profile = (Astro.locals as any).profile;
+
+if (!user || profile?.role !== 'admin') {
+  return Astro.redirect('/signin');
+}
+
+const appRuntime = createAppRuntime(Astro.locals);
+
+const [pendingSites, overviewData] = await appRuntime.runPromise(Effect.all([
+  Effect.gen(function* () {
+    const repo = yield* IAdminRepository;
+    return yield* repo.getPendingSites();
+  }),
+  Effect.gen(function* () {
+    const repo = yield* IAdminRepository;
+    return yield* repo.getAnalyticsOverview();
+  }),
+], { concurrency: 'unbounded' }));
 ---
 
 <AdminLayout title="Admin Overview">
@@ -10,10 +33,10 @@ import AdminLayout from '@/layouts/AdminLayout.astro';
         Pending Review
       </Text>
       <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
-        —
+        {pendingSites?.length ?? 0}
       </Text>
       <Text tag="p" variant="textXS" class="text-base-400 mt-1">
-        Connected in Sprint 2
+        {pendingSites?.length ?? 0} products waiting for review
       </Text>
     </div>
     <div class="rounded-lg border border-base-200 p-6">
@@ -21,10 +44,10 @@ import AdminLayout from '@/layouts/AdminLayout.astro';
         Approved Sites
       </Text>
       <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
-        —
+        {overviewData?.approvedSitesCount ?? 0}
       </Text>
       <Text tag="p" variant="textXS" class="text-base-400 mt-1">
-        Connected in Sprint 2
+        {overviewData?.sitesCount ?? 0} total submissions
       </Text>
     </div>
     <div class="rounded-lg border border-base-200 p-6">
@@ -32,10 +55,10 @@ import AdminLayout from '@/layouts/AdminLayout.astro';
         Total Users
       </Text>
       <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
-        —
+        {overviewData?.usersCount ?? 0}
       </Text>
       <Text tag="p" variant="textXS" class="text-base-400 mt-1">
-        Connected in Sprint 2
+        {overviewData?.votesCount ?? 0} votes, {overviewData?.commentsCount ?? 0} comments
       </Text>
     </div>
   </div>

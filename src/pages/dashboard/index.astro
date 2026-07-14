@@ -49,7 +49,7 @@ if (approvedCount && approvedCount >= 5) {
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-    <div class="rounded-lg border border-base-200 p-6">
+    <a href="/dashboard/products" class="block rounded-lg border border-base-200 p-6 hover:border-accent-300 hover:shadow-sm transition-all">
       <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
         {t('dashboard.submitted')}
       </Text>
@@ -59,23 +59,23 @@ if (approvedCount && approvedCount >= 5) {
       <Text tag="p" variant="textXS" class="text-base-400 mt-1">
         {approvedCount || 0} {t('dashboard.approved')}
       </Text>
-    </div>
-    <div class="rounded-lg border border-base-200 p-6">
+    </a>
+    <a href="/dashboard/products" class="block rounded-lg border border-base-200 p-6 hover:border-accent-300 hover:shadow-sm transition-all">
       <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
         {t('dashboard.totalVotes')}
       </Text>
       <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
         {totalVotes}
       </Text>
-    </div>
-    <div class="rounded-lg border border-base-200 p-6">
+    </a>
+    <a href="/dashboard/products" class="block rounded-lg border border-base-200 p-6 hover:border-accent-300 hover:shadow-sm transition-all">
       <Text tag="p" variant="textXS" class="text-base-500 uppercase tracking-wider">
         {t('dashboard.totalViews')}
       </Text>
       <Text tag="p" variant="displaySM" class="text-base-900 font-display mt-1">
         {totalViews}
       </Text>
-    </div>
+    </a>
   </div>
 
   {(!submittedCount || submittedCount === 0) && (

@@ -14,11 +14,13 @@ export class IAdminRepository extends Context.Tag("IAdminRepository")<
     readonly getPendingSites: () => Effect.Effect<Array<{
       id: string;
       title: string;
+      description: string | null;
       tagline: string | null;
       live_url: string;
       thumbnail_url: string | null;
       tags: string[];
       created_at: Date | null;
+      views_count: number;
       profiles: {
         username: string | null;
         full_name: string | null;
@@ -31,9 +33,13 @@ export class IAdminRepository extends Context.Tag("IAdminRepository")<
       rejection_reason: string | null;
       created_at: Date | null;
     }>, DatabaseError>;
-    readonly getAnalyticsOverview: () => Effect.Effect<{
+    readonly getAnalyticsOverview: (opts?: {
+      startDate?: Date;
+      endDate?: Date;
+    }) => Effect.Effect<{
       usersCount: number;
       sitesCount: number;
+      approvedSitesCount: number;
       votesCount: number;
       commentsCount: number;
       totalRevenue: number;

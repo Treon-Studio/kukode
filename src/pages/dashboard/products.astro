@@ -17,20 +17,49 @@ if (!user) {
 }
 
 const appRuntime = createAppRuntime(Astro.locals);
-const mySites = await appRuntime.runPromise(Effect.gen(function* () {
+const mySitesAll = await appRuntime.runPromise(Effect.gen(function* () {
   const repo = yield* ISiteRepository;
   return yield* repo.getCreatorSites(user.id);
 }));
+
+// Filter by ?status= query param
+const statusFilter = Astro.url.searchParams.get('status') || 'all';
+const mySites = statusFilter === 'all'
+  ? mySitesAll
+  : mySitesAll.filter((s: any) => s.status === statusFilter);
+const statusCounts = {
+  all: mySitesAll.length,
+  approved: mySitesAll.filter((s: any) => s.status === 'approved').length,
+  pending_review: mySitesAll.filter((s: any) => s.status === 'pending_review').length,
+  rejected: mySitesAll.filter((s: any) => s.status === 'rejected').length,
+};
 ---
 
-<DashboardLayout title={lang === 'en' ? 'My Products' : 'Produk Saya'}>
+<DashboardLayout title={t('dashboard.myProducts')}>
   <div class="mb-6 flex justify-between items-center">
     <Text tag="p" variant="textSM" class="text-base-600">
-      {lang === 'en' ? 'Manage your submissions and track their performance.' : 'Kelola kiriman produk Anda dan pantau performanya.'}
+      {t('dashboard.manageSubmissions')}
     </Text>
     <Button size="xs" variant="accent" href="/submit">
-      {lang === 'en' ? 'Submit New Product' : 'Kirim Produk Baru'}
+      {t('dashboard.submitNewProduct')}
     </Button>
+  </div>
+
+  <!-- Status Filter Pills -->
+  <div class="inline-flex items-center gap-1.5 bg-base-50 p-1.5 rounded-xl border border-base-200 mb-6">
+    {[['all', 'All'], ['approved', 'Disetujui'], ['pending_review', 'Pending Review'], ['rejected', 'Ditolak']].map(([key, label]) => (
+      <a
+        href={key === 'all' ? '/dashboard/products' : `/dashboard/products?status=${key}`}
+        class:list={[
+          'px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200',
+          statusFilter === key
+            ? 'bg-white text-base-900 shadow-sm border border-base-200/50'
+            : 'text-base-500 hover:text-base-900',
+        ]}
+      >
+        {label} ({statusCounts[key as keyof typeof statusCounts]})
+      </a>
+    ))}
   </div>
 
   {(!mySites || mySites.length === 0) ? (
@@ -65,19 +94,19 @@ const mySites = await appRuntime.runPromise(Effect.gen(function* () {
                 
                 {/* Status Badges */}
                 {site.status === 'approved' && (
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-                    Approved
-                  </span>
+                  <a href="/dashboard/products?status=approved" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:ring-1 hover:ring-green-300 transition-all cursor-pointer">
+                    {t('dashboard.approved')}
+                  </a>
                 )}
                 {site.status === 'pending_review' && (
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200">
-                    Pending Review
-                  </span>
+                  <a href="/dashboard/products?status=pending_review" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 hover:ring-1 hover:ring-yellow-300 transition-all cursor-pointer">
+                    {t('dashboard.pendingReview')}
+                  </a>
                 )}
                 {site.status === 'rejected' && (
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-                    Rejected
-                  </span>
+                  <a href="/dashboard/products?status=rejected" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:ring-1 hover:ring-red-300 transition-all cursor-pointer">
+                    {t('dashboard.rejected')}
+                  </a>
                 )}
               </div>
               
@@ -99,7 +128,7 @@ const mySites = await appRuntime.runPromise(Effect.gen(function* () {
                 </a>
                 <span>•</span>
                 <span>
-                  {lang === 'en' ? 'Submitted on ' : 'Dikirim pada '}
+                  {t('dashboard.submittedOn')}
                   {new Date(site.created_at).toLocaleDateString('id-ID', {
                     day: 'numeric',
                     month: 'long',
@@ -124,7 +153,7 @@ const mySites = await appRuntime.runPromise(Effect.gen(function* () {
             {site.status === 'rejected' && site.rejection_reason && (
               <div class="mt-3.5 p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-xs leading-relaxed">
                 <span class="font-bold block mb-0.5">
-                  {lang === 'en' ? 'Rejection Reason:' : 'Alasan Penolakan:'}
+                  {t('dashboard.rejectionReason')}
                 </span>
                 {site.rejection_reason}
               </div>
@@ -142,7 +171,7 @@ const mySites = await appRuntime.runPromise(Effect.gen(function* () {
                   href={`/sites/site/${site.id}`}
                   class="text-center w-full justify-center"
                 >
-                  {lang === 'en' ? 'View Page' : 'Lihat Halaman'}
+                  {t('dashboard.viewPage')}
                 </Button>
                 <Button
                   isLink
@@ -151,15 +180,14 @@ const mySites = await appRuntime.runPromise(Effect.gen(function* () {
                   href={`/dashboard/analytics/${site.id}`}
                   class="text-center w-full justify-center"
                 >
-                  {lang === 'en' ? 'Analytics' : 'Analitik'}
+                  {t('dashboard.analytics')}
                 </Button>
               </>
             ) : (
               <span class="text-xs text-base-400 italic text-center w-full block py-2">
-                {site.status === 'pending_review' 
-                  ? (lang === 'en' ? 'Awaiting Approval' : 'Menunggu Persetujuan')
-                  : (lang === 'en' ? 'Submission Rejected' : 'Pengiriman Ditolak')
-                }
+                {site.status === 'pending_review'
+                  ? t('dashboard.awaitingApproval')
+                  : t('dashboard.submissionRejected')}
               </span>
             )}
           </div>

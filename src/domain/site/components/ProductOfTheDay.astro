@@ -9,12 +9,18 @@ import { ICronRepository } from '@/domain/cron';
 const user = (Astro.locals as any).user;
 
 const appRuntime = createAppRuntime(Astro.locals);
-const runnable = Effect.gen(function* () {
-  const repo = yield* ICronRepository;
-  return yield* repo.getLatestPOTDDetails(user?.id);
-});
+let potdDetails: any = null;
+try {
+  const runnable = Effect.gen(function* () {
+    const repo = yield* ICronRepository;
+    return yield* repo.getLatestPOTDDetails(user?.id);
+  });
 
-const potdDetails = await appRuntime.runPromise(runnable);
+  potdDetails = await appRuntime.runPromise(runnable);
+} catch (e) {
+  console.error('[POTD] Failed to fetch product of the day:', e);
+  // Gracefully degrade — section won't render
+}
 let site: any = null;
 let voteCount = 0;
 let voted = false;

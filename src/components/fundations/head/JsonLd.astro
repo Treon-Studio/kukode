@@ -1,0 +1,32 @@
+---
+/**
+ * Generic JSON-LD structured-data component.
+ * Renders a single `<script type="application/ld+json">` tag with the
+ * Schema.org payload that Astro/SEO crawlers (Google, Bing) and AI crawlers
+ * (GPTBot, ClaudeBot, PerplexityBot) all consume.
+ *
+ * Pass a fully-formed Schema.org object (or array of objects) via the
+ * `data` prop. The component handles JSON.stringify + minimal escaping.
+ */
+
+interface Props {
+  data: Record<string, unknown> | Array<Record<string, unknown>>;
+  /** When set, wraps multiple objects in a `@graph` for the parent @context. */
+  graph?: boolean;
+}
+
+const { data, graph = false } = Astro.props;
+
+const payload = graph
+  ? {
+      '@context': 'https://schema.org',
+      '@graph': Array.isArray(data) ? data : [data],
+    }
+  : data;
+---
+
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify(payload)}
+/>

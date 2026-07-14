@@ -1,0 +1,22 @@
+# Kukode
+> A curated directory of production-grade websites, design systems, and Astro/HTML templates — for designers, developers, and creative professionals.
+
+## Main sections
+- [Home](https://kukode.treonstudio.com/): Curated production websites, daily site of the day, leaderboard.
+- [Leaderboard](https://kukode.treonstudio.com/leaderboard/): Weekly / monthly / all-time top-voted sites.
+- [Submit](https://kukode.treonstudio.com/submit/): Submit a product or site for review.
+- [Store](https://kukode.treonstudio.com/store/): Premium Astro and HTML templates.
+- [Blog](https://kukode.treonstudio.com/blog/): Articles on design systems, typography, front-end tooling.
+- [About](https://kukode.treonstudio.com/about/): What Kukode is and who it is for.
+- [Pricing](https://kukode.treonstudio.com/pricing/): Subscription plans.
+- [Advertise](https://kukode.treonstudio.com/advertise/): Sponsored article and newsletter ad packages.
+
+## Optional: Key facts
+- Multi-locale: English (default), Bahasa Indonesia, Bahasa Banjar, Basa Jawa, Bahasa Melayu.
+- Authentication: email/password, passkeys (WebAuthn), Google OAuth.
+- Backed by Turso (libSQL) and deployed on Cloudflare Workers.
+- Open submissions via /submit/.
+
+## Contact
+- Site: https://kukode.treonstudio.com
+- Support: support@kukode.treonstudio.com

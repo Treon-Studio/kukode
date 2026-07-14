@@ -5,13 +5,14 @@ import Text from '@/components/fundations/elements/Text.astro';
 import UserAvatar from '@/components/global/UserAvatar.astro';
 import { createAppRuntime } from '@/infra/runtime/app.runtime';
 import { IAuthRepository } from '@/domain/auth';
-import { getLangFromLocals, useTranslations } from '@/i18n/utils';
+import { getClientDict, getLangFromLocals, useTranslations } from '@/i18n/utils';
 import DashboardLayout from '@/layouts/DashboardLayout.astro';
 import { APP_CONFIG } from '@/lib/constants';
 import { runStorageEffect, StorageAdapter } from '@/lib/storage';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
+const clientDict = getClientDict(lang);
 
 const user = (Astro.locals as any).user;
 const profile = (Astro.locals as any).profile;
@@ -35,15 +36,9 @@ if (Astro.request.method === 'POST') {
   // Validation checks
   const usernameRegex = /^[a-zA-Z0-9_-]+$/;
   if (username && !usernameRegex.test(username)) {
-    errorMsg =
-      lang === 'en'
-        ? 'Username can only contain letters, numbers, hyphens, and underscores.'
-        : 'Username hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.';
+    errorMsg = t('settings.usernameInvalid');
   } else if (website && !/^https?:\/\//i.test(website)) {
-    errorMsg =
-      lang === 'en'
-        ? 'Website URL must start with http:// or https://'
-        : 'URL website harus dimulai dengan http:// atau https://';
+    errorMsg = t('settings.websiteInvalid');
   }
 
   // Check username uniqueness (if changed)
@@ -61,13 +56,9 @@ if (Astro.request.method === 'POST') {
   let newAvatarUrl = profile?.avatar_url;
   if (!errorMsg && avatarFile && avatarFile.size > 0) {
     if (avatarFile.size > 2 * 1024 * 1024) {
-      errorMsg =
-        lang === 'en'
-          ? 'Avatar size must be less than 2MB.'
-          : 'Ukuran avatar harus kurang dari 2MB.';
+      errorMsg = t('settings.avatarTooLarge');
     } else if (!avatarFile.type.startsWith('image/')) {
-      errorMsg =
-        lang === 'en' ? 'Avatar must be an image file.' : 'Avatar harus berupa berkas gambar.';
+      errorMsg = t('settings.avatarNotImage');
     }
 
     if (!errorMsg) {
@@ -125,7 +116,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
   <form method="POST" enctype="multipart/form-data" class="space-y-6 max-w-lg">
     <div>
       <label class="block text-sm font-medium text-base-700 mb-1">
-        {lang === 'en' ? 'Profile Picture' : 'Foto Profil'}
+        {t('settings.avatarLabel')}
       </label>
       <div class="flex items-center gap-4">
         <UserAvatar
@@ -143,7 +134,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
             class="block w-full text-xs text-base-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-base-900 file:text-white hover:file:bg-base-800 transition cursor-pointer"
           />
           <p class="text-[10px] text-base-400 mt-1">
-            {lang === 'en' ? 'Format JPEG, PNG, or WebP. Max size 2MB.' : 'Format JPEG, PNG, atau WebP. Maksimal 2MB.'}
+            {t('settings.avatarHelp')}
           </p>
         </div>
       </div>
@@ -240,18 +231,16 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
   </form>
 
   <div class="mt-12 pt-8 border-t border-base-200 max-w-lg" data-lang={lang} id="passkeys-container">
-    <h3 class="text-lg font-semibold text-base-800 mb-2">Passkeys & Biometric Security</h3>
+    <h3 class="text-lg font-semibold text-base-800 mb-2">{t('settings.passkeysTitle')}</h3>
     <p class="text-sm text-base-500 mb-6">
-      {lang === 'en' 
-        ? 'Passkeys allow you to sign in securely using your fingerprint, face scan, or device PIN, without typing a password.' 
-        : 'Passkey memungkinkan Anda masuk dengan aman menggunakan sidik jari, pemindai wajah, atau PIN perangkat, tanpa mengetik sandi.'}
+      {t('settings.passkeysDesc')}
     </p>
 
     <!-- Passkeys List -->
     <div class="space-y-3 mb-6" id="passkeys-list">
       {userPasskeys.length === 0 ? (
         <div class="text-sm text-base-400 italic bg-base-50 rounded-lg p-4 border border-base-200">
-          {lang === 'en' ? 'No passkeys registered yet.' : 'Belum ada passkey yang terdaftar.'}
+          {t('settings.noPasskeys')}
         </div>
       ) : (
         userPasskeys.map((pk) => (
@@ -259,8 +248,8 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
             <div>
               <p class="text-sm font-semibold text-base-700">Passkey</p>
               <p class="text-xs text-base-400">
-                {lang === 'en' ? 'Created on' : 'Dibuat pada'}{' '}
-                {new Date(pk.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', {
+                {t('settings.passkeyCreated')}{' '}
+                {new Date(pk.created_at).toLocaleDateString(lang === 'id' ? 'id-ID' : lang === 'jv' ? 'jv-ID' : lang === 'ms' ? 'ms-MY' : lang === 'bjn' ? 'id-ID' : 'en-US', {
                   dateStyle: 'medium',
                 })}
               </p>
@@ -269,7 +258,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
               class="delete-pk-btn text-xs text-red-600 hover:text-red-800 font-medium transition duration-200"
               data-id={pk.id}
             >
-              {lang === 'en' ? 'Remove' : 'Hapus'}
+              {t('settings.passkeyRemove')}
             </button>
           </div>
         ))
@@ -280,21 +269,23 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
       id="register-passkey-btn"
       class="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-base-800 text-white hover:bg-base-900 transition duration-200 focus:outline-none focus:ring-2 focus:ring-base-500 focus:ring-offset-2"
     >
-      {lang === 'en' ? 'Register new passkey' : 'Daftarkan passkey baru'}
+      {t('settings.passkeyRegister')}
     </button>
     <p id="passkey-error" class="text-xs text-red-500 mt-2 hidden"></p>
     <p id="passkey-success" class="text-xs text-green-600 mt-2 hidden"></p>
   </div>
 </DashboardLayout>
 
+<script type="application/json" id="i18n-dict" set:html={JSON.stringify(clientDict)} />
 <script>
   import 'webauthn-polyfills';
   import { FileLifecycleStateMachine } from '@/lib/storage/state-machine';
-  import { getLangFromLocals } from '@/i18n/utils';
 
   document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('passkeys-container');
-    const lang = container?.getAttribute('data-lang') || 'en';
+    // Hydrate the active language dictionary for client-side use.
+    const dictNode = document.getElementById('i18n-dict');
+    const dict: Record<string, string> = dictNode?.textContent ? JSON.parse(dictNode.textContent) : {};
+    const t = (key: string) => dict[key] ?? key;
 
     const registerBtn = document.getElementById('register-passkey-btn');
     const passkeyError = document.getElementById('passkey-error');
@@ -307,7 +298,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
         passkeySuccess.classList.add('hidden');
         (registerBtn as HTMLButtonElement).disabled = true;
         const originalText = registerBtn.textContent;
-        registerBtn.textContent = lang === 'en' ? 'Generating options...' : 'Membuat opsi...';
+        registerBtn.textContent = t('settings.passkeyGenerating');
 
         try {
           // 1. Fetch registration options from server
@@ -318,7 +309,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
           }
           const options = await optionsRes.json();
 
-          registerBtn.textContent = lang === 'en' ? 'Waiting for authenticator...' : 'Menunggu autentikator...';
+          registerBtn.textContent = t('settings.passkeyWaiting');
 
           // 2. Call browser WebAuthn API
           const publicKey = PublicKeyCredential.parseCreationOptionsFromJSON(options);
@@ -327,10 +318,10 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
           });
 
           if (!credential) {
-            throw new Error(lang === 'en' ? 'Failed to create credential' : 'Gagal membuat kredensial');
+            throw new Error(t('settings.passkeyFailedCreate'));
           }
 
-          registerBtn.textContent = lang === 'en' ? 'Verifying...' : 'Memverifikasi...';
+          registerBtn.textContent = t('settings.passkeyVerifying');
 
           // 3. Send response back to server for verification
           const verifyRes = await fetch('/api/auth/passkey/register-verify', {
@@ -344,12 +335,12 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
             throw new Error(errData.error || 'Verification failed');
           }
 
-          passkeySuccess.textContent = lang === 'en' ? 'Passkey registered successfully! Refreshing...' : 'Passkey berhasil didaftarkan! Menyegarkan...';
+          passkeySuccess.textContent = t('settings.passkeyRegistered');
           passkeySuccess.classList.remove('hidden');
           setTimeout(() => window.location.reload(), 1500);
         } catch (err: any) {
           console.error(err);
-          passkeyError.textContent = err.message || (lang === 'en' ? 'Registration failed' : 'Registrasi gagal');
+          passkeyError.textContent = err.message || t('settings.passkeyRegistrationFailed');
           passkeyError.classList.remove('hidden');
           (registerBtn as HTMLButtonElement).disabled = false;
           registerBtn.textContent = originalText;
@@ -362,15 +353,13 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
     deleteBtns.forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
-        
+
         const confirmed = await (window as any).confirmModal({
-          title: lang === 'en' ? 'Remove Passkey' : 'Hapus Passkey',
-          message: lang === 'en'
-            ? 'Are you sure you want to remove this passkey? You will no longer be able to use it to sign in.'
-            : 'Apakah Anda yakin ingin menghapus passkey ini? Anda tidak akan dapat menggunakannya lagi untuk masuk.',
-          confirmText: lang === 'en' ? 'Remove' : 'Hapus',
-          cancelText: lang === 'en' ? 'Cancel' : 'Batal',
-          danger: true
+          title: t('settings.passkeyRemoveTitle'),
+          message: t('settings.passkeyRemoveMessage'),
+          confirmText: t('settings.passkeyRemove'),
+          cancelText: t('common.cancel'),
+          danger: true,
         });
 
         if (!confirmed) return;
@@ -387,13 +376,11 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
             throw new Error(errData.error || 'Failed to remove');
           }
 
-          (window as any).toast.success(
-            lang === 'en' ? 'Passkey removed successfully' : 'Passkey berhasil dihapus'
-          );
+          (window as any).toast.success(t('settings.passkeyRemoved'));
 
           const element = document.getElementById(`pk-${id}`);
           if (element) element.remove();
-          
+
           const list = document.getElementById('passkeys-list');
           if (list && list.children.length === 0) {
             window.location.reload();
@@ -421,7 +408,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
             break;
           case 'Uploading':
             saveBtn.disabled = true;
-            saveBtn.textContent = lang === 'en' ? 'Uploading Avatar...' : 'Mengunggah Avatar...';
+            saveBtn.textContent = t('settings.uploadingAvatar');
             break;
           case 'Uploaded':
             saveBtn.disabled = false;

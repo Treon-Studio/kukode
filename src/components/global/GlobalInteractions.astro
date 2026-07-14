@@ -1,5 +1,9 @@
 ---
-const lang = Astro.props.lang || 'en';
+import { getClientDict, getLangFromLocals, useTranslations } from '@/i18n/utils';
+
+const lang = Astro.props.lang || getLangFromLocals(Astro.locals);
+const t = useTranslations(lang as any);
+const clientDict = getClientDict(lang as any);
 ---
 
 <!-- Toast Container -->
@@ -32,19 +36,20 @@ const lang = Astro.props.lang || 'en';
         id="modal-cancel-btn"
         class="px-4 py-2 text-xs font-semibold rounded-lg bg-base-100 text-base-700 hover:bg-base-200 transition duration-200 cursor-pointer font-sans"
       >
-        Batal
+        {t('common.cancel')}
       </button>
       <button
         type="button"
         id="modal-confirm-btn"
         class="px-4 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-500 transition duration-200 cursor-pointer font-sans shadow-sm"
       >
-        Konfirmasi
+        {t('common.confirm')}
       </button>
     </div>
   </div>
 </div>
 
+<script type="application/json" id="global-i18n-dict" set:html={JSON.stringify(clientDict)} />
 <script is:inline define:vars={{ lang }}>
   (() => {
     // TOAST NOTIFICATION SYSTEM
@@ -193,11 +198,14 @@ const lang = Astro.props.lang || 'en';
     });
 
     window.confirmModal = (options = {}) => {
+      const dictNode = document.getElementById('global-i18n-dict');
+      const dict = dictNode && dictNode.textContent ? JSON.parse(dictNode.textContent) : {};
+      const t = (key, fallback) => dict[key] || fallback || key;
       const {
-        title = lang === 'en' ? 'Are you sure?' : 'Apakah Anda yakin?',
+        title = t('common.areYouSure', 'Are you sure?'),
         message = '',
-        confirmText = lang === 'en' ? 'Confirm' : 'Konfirmasi',
-        cancelText = lang === 'en' ? 'Cancel' : 'Batal',
+        confirmText = t('common.confirm', 'Confirm'),
+        cancelText = t('common.cancel', 'Cancel'),
         danger = true,
       } = options;
 

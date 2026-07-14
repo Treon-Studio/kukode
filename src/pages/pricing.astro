@@ -18,6 +18,8 @@ const plans = [
         : 'Dapatkan akses terbatas untuk semua fitur.',
     priceStatic: '$0',
     buttonVariant: 'default',
+    actionHref: '/signin',
+    actionLabel: t('pricing.choosePlan'),
     features: [
       {
         label: lang === 'en' ? 'Bookmarks' : 'Bookmark',
@@ -45,6 +47,8 @@ const plans = [
     priceMonthly: '$9',
     priceAnnual: '$6',
     buttonVariant: 'accent',
+    actionHref: '/api/store/subscribe?plan=team',
+    actionLabel: lang === 'en' ? 'Subscribe' : 'Berlangganan',
     features: [
       {
         label: lang === 'en' ? 'Bookmarks & collections' : 'Bookmark & koleksi',
@@ -147,12 +151,12 @@ const plans = [
               </div>
               <Button
                 size="base"
-                variant="default"
+                variant={plan.buttonVariant}
                 isLink={true}
-                href="/signin"
+                href={plan.actionHref}
                 class="w-fit mt-8"
               >
-                {t('pricing.choosePlan')}
+                {plan.actionLabel}
               </Button>
             </div>
           ))

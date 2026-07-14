@@ -1,5 +1,6 @@
 ---
 import Wrapper from '@/components/fundations/containers/Wrapper.astro';
+import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
@@ -20,6 +21,11 @@ const t = useTranslations(lang);
       <Text tag="p" variant="textBase" class="text-base-600 mt-4">
         {t('hero.desc')}
       </Text>
+      <div class="flex justify-center mt-8">
+        <Button isLink size="lg" variant="accent" href="/submit">
+          {t('hero.cta')}
+        </Button>
+      </div>
     </div>
   </Wrapper>
 </section>

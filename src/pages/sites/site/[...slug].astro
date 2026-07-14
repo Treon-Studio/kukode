@@ -4,12 +4,42 @@
 import { getCollection, render } from 'astro:content';
 import { Effect } from 'effect';
 import SitesLayout from '@/layouts/SitesLayout.astro';
+import DisqusClone from '@/domain/comments/components/DisqusClone.jsx';
 import { recordEventProgram } from '@/domain/analytics';
 import { ISiteRepository } from '@/domain/site';
 import { createAppRuntime } from '@/infra/runtime/app.runtime';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 
 const { slug } = Astro.params;
 const user = (Astro.locals as any).user;
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+
+// Build i18n label bag for the React comment thread.
+// `client:only="react"` is required (uses DOM-only APIs — contentEditable,
+// document.execCommand, DOMParser) so we hand it fully-resolved strings.
+const commentLabels = {
+  countTitle: (n: number) => t('comments.countTitle', { count: n }),
+  composerPlaceholder: t('comments.composerPlaceholder'),
+  send: t('comments.send'),
+  reply: t('comments.reply'),
+  replyPlaceholder: (name: string) =>
+    t('comments.replyPlaceholder', { name }),
+  upvote: t('comments.upvote'),
+  report: t('comments.report'),
+  share: t('comments.share'),
+  hideReplies: t('comments.hideReplies'),
+  showReplies: t('comments.showReplies'),
+  showMore: t('comments.showMore'),
+  maker: t('comments.maker'),
+  timeAgo: (ms: number) => {
+    const diff = Math.floor(ms / 1000);
+    if (diff < 60) return t('comments.timeAgo.justNow');
+    if (diff < 3600) return t('comments.timeAgo.minutes', { n: Math.floor(diff / 60) });
+    if (diff < 86400) return t('comments.timeAgo.hours', { n: Math.floor(diff / 3600) });
+    return t('comments.timeAgo.days', { n: Math.floor(diff / 86400) });
+  },
+};
 
 if (!slug) {
   return Astro.redirect('/404');
@@ -99,12 +129,18 @@ if (staticPage) {
 }
 ---
 
-<SitesLayout 
-  frontmatter={frontmatter} 
+<SitesLayout
+  frontmatter={frontmatter}
   isDynamic={isDynamic}
   voteCount={voteCount}
   voted={voted}
   siteId={siteId}
 >
   {ContentComp && <ContentComp />}
+
+  {/* Comment thread — React island (client-only because it uses contentEditable + document APIs) */}
+  <DisqusClone
+    client:only="react"
+    labels={commentLabels}
+  />
 </SitesLayout>

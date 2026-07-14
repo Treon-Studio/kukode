@@ -9,6 +9,10 @@ import OrDivider from './OrDivider.astro';
 
 const lang = getLangFromLocals(Astro.locals);
 const t = useTranslations(lang);
+
+// Shared in-page state used by both the template and the inline script.
+// The script below shadows this with `let currentMode` and mutates it.
+const currentMode: 'signin' | 'signup' = 'signup';
 ---
 
 <!-- Auth Modal Container -->
@@ -52,6 +56,26 @@ const t = useTranslations(lang);
       </div>
 
       <OrDivider />
+
+      <!-- Mode Tabs -->
+      <div class="inline-flex items-center gap-1.5 bg-base-50 p-1.5 rounded-xl border border-base-200 mb-6 w-full">
+        <button
+          type="button"
+          data-auth-tab="signin"
+          class="flex-1 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 data-[active=true]:bg-white data-[active=true]:text-base-900 data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-base-200/50 text-base-500 hover:text-base-900"
+          data-active={currentMode === 'signin' ? 'true' : 'false'}
+        >
+          Sign In
+        </button>
+        <button
+          type="button"
+          data-auth-tab="signup"
+          class="flex-1 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 data-[active=true]:bg-white data-[active=true]:text-base-900 data-[active=true]:shadow-sm data-[active=true]:border data-[active=true]:border-base-200/50 text-base-500 hover:text-base-900"
+          data-active={currentMode === 'signup' ? 'true' : 'false'}
+        >
+          Sign Up
+        </button>
+      </div>
 
       <!-- Native Auth Form -->
       <form id="auth-modal-form" class="space-y-4 font-sans">
@@ -488,6 +512,13 @@ const t = useTranslations(lang);
         setMode(currentMode === 'signin' ? 'signup' : 'signin');
       });
     }
+    // Tabs
+    document.querySelectorAll('[data-auth-tab]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const mode = tab.getAttribute('data-auth-tab') as 'signin' | 'signup';
+        setMode(mode);
+      });
+    });
 
     // Username Sync Script
     if (emailInput && usernameInput) {

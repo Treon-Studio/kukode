@@ -13,19 +13,24 @@ const t = useTranslations(lang);
 
 const filter = Astro.url.searchParams.get('filter') || 'weekly';
 
-const appRuntime = createAppRuntime(Astro.locals);
-const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
-  const repo = yield* ISiteRepository;
-  return yield* repo.getLeaderboard(filter);
-}));
+let appRuntime: any;
+let rankedSites: any[] | null = null;
+try {
+  appRuntime = createAppRuntime(Astro.locals);
+  rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
+    const repo = yield* ISiteRepository;
+    return yield* repo.getLeaderboard(filter);
+  }));
+} catch (e) {
+  console.error('[Leaderboard] Failed to initialize:', e);
+  rankedSites = [];
+}
 ---
 
 <BaseLayout
   seoProps={{
-    title: lang === 'en' ? 'Leaderboard' : 'Papan Peringkat',
-    description: lang === 'en' 
-      ? 'Top voted sites on Kukode.' 
-      : 'Situs web terpopuler dengan upvote terbanyak di Kukode.',
+    title: t('leaderboard.title'),
+    description: t('leaderboard.description'),
     url: '/leaderboard/',
   }}
 >
@@ -33,12 +38,10 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
     <Wrapper variant="standard">
       <div class="text-center max-w-2xl mx-auto mb-16">
         <Text tag="h1" variant="displayMD" class="text-base-900 font-display font-light">
-          {lang === 'en' ? 'Leaderboard' : 'Papan Peringkat'}
+          {t('leaderboard.title')}
         </Text>
         <Text tag="p" variant="textBase" class="text-base-600 mt-3">
-          {lang === 'en' 
-            ? 'Discover the most upvoted sites built by the developer community.' 
-            : 'Temukan produk-produk paling populer yang dikurasi oleh komunitas pengembang.'}
+          {t('leaderboard.discover')}
         </Text>
 
         {/* Time Filters */}
@@ -52,7 +55,7 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
                 : 'text-base-500 hover:text-base-900',
             ]}
           >
-            {lang === 'en' ? 'Weekly' : 'Mingguan'}
+            {t('leaderboard.weekly')}
           </a>
           <a
             href="?filter=monthly"
@@ -63,7 +66,7 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
                 : 'text-base-500 hover:text-base-900',
             ]}
           >
-            {lang === 'en' ? 'Monthly' : 'Bulanan'}
+            {t('leaderboard.monthly')}
           </a>
           <a
             href="?filter=all"
@@ -74,7 +77,7 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
                 : 'text-base-500 hover:text-base-900',
             ]}
           >
-            {lang === 'en' ? 'All-Time' : 'Sepanjang Masa'}
+            {t('leaderboard.allTime')}
           </a>
         </div>
       </div>
@@ -82,7 +85,7 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
       <div class="max-w-3xl mx-auto bg-white border border-base-200 rounded-3xl overflow-hidden shadow-sm">
         {(!rankedSites || rankedSites.length === 0) ? (
           <div class="p-16 text-center text-base-500">
-            {lang === 'en' ? 'No products have been upvoted yet.' : 'Belum ada produk yang mendapatkan upvote.'}
+            {t('leaderboard.empty')}
           </div>
         ) : (
           <div class="divide-y divide-base-100">
@@ -149,7 +152,7 @@ const rankedSites = await appRuntime.runPromise(Effect.gen(function* () {
                         {site.voteCount}
                       </span>
                       <span class="text-[9px] text-base-400 font-semibold uppercase tracking-wider">
-                        {lang === 'en' ? 'Votes' : 'Suara'}
+                        {t('leaderboard.votes')}
                       </span>
                     </div>
 

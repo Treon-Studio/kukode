@@ -1,8 +1,5 @@
 name = "kukode"
-compatibility_date = "2024-04-05"
+compatibility_date = "2025-09-29"
 
 [vars]
-# You can define safe default env variables here.
-# For secrets, use the Cloudflare dashboard or `npx wrangler secret put`.
-# Example: 
-# PUBLIC_SUPABASE_URL = "..."
+# For secrets (API keys, database URLs, auth tokens), use `npx wrangler secret put`.

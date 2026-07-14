@@ -3,3 +3,6 @@ compatibility_date = "2025-09-29"
 
 [vars]
 # For secrets (API keys, database URLs, auth tokens), use `npx wrangler secret put`.
+
+[triggers]
+crons = ["0 */6 * * *"]

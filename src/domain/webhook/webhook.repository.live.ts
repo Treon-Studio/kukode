@@ -66,6 +66,17 @@ export const WebhookRepositoryLive = Layer.effect(
         catch: (e) => new DatabaseError({ cause: e, message: "DB Error get user profile" })
       }),
 
+      findPurchase: (invoiceId) => Effect.tryPromise({
+        try: async () => {
+          const [p] = await db
+            .select({ status: purchases.status })
+            .from(purchases)
+            .where(eq(purchases.xendit_invoice_id, invoiceId))
+            .limit(1);
+          return p;
+        },
+        catch: (e) => new DatabaseError({ cause: e, message: "DB Error find purchase" })
+      }),
       getSiteTitle: (siteId) => Effect.tryPromise({
         try: async (): Promise<string | null> => {
           const [site] = await db

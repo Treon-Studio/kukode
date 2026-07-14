@@ -28,6 +28,12 @@ export const processXenditCallbackProgram = (
     const mailer = yield* IMailerService;
 
     if (payload.status === "PAID") {
+      // Idempotency guard: skip if already completed
+      const existing = yield* repo.findPurchase(payload.id);
+      if (existing && existing.status === 'completed') {
+        return { success: true };
+      }
+
       const parts = payload.external_id.split('_');
       const siteId = (parts[0] === 'adv') ? parts[3] : undefined;
 

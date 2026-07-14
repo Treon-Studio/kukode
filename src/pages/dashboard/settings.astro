@@ -302,7 +302,7 @@ const userPasskeys = await appRuntime.runPromise(Effect.gen(function* () {
 
         try {
           // 1. Fetch registration options from server
-          const optionsRes = await fetch('/api/auth/passkey/register-options');
+          const optionsRes = await fetch('/api/auth/passkey/register-options', { method: 'POST' });
           if (!optionsRes.ok) {
             const errData = await optionsRes.json();
             throw new Error(errData.error || 'Failed to fetch options');

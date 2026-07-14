@@ -5,7 +5,8 @@ import { createAppRuntime } from '@/infra/runtime/app.runtime';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ request, locals }) => {
+// NOTE: Cloudflare cron trigger invokes this via POST (trigger config)
+export const POST: APIRoute = async ({ request, locals }) => {
   const authHeader = request.headers.get('authorization');
   const cronSecret = locals.runtime?.env?.CRON_SECRET || import.meta.env.CRON_SECRET;
 

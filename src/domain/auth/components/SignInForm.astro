@@ -137,7 +137,7 @@ const t = useTranslations(lang);
     try {
       const capabilities = await PublicKeyCredential.getClientCapabilities();
       if (capabilities.conditionalGet === true) {
-        const optionsRes = await fetch('/api/auth/passkey/login-options');
+        const optionsRes = await fetch('/api/auth/passkey/login-options', { method: 'POST' });
         if (!optionsRes.ok) return;
         const options = await optionsRes.json();
 
@@ -184,7 +184,7 @@ const t = useTranslations(lang);
     passkeyBtn.textContent = lang === 'en' ? 'Checking authenticator...' : 'Memeriksa autentikator...';
 
     try {
-      const optionsRes = await fetch('/api/auth/passkey/login-options');
+      const optionsRes = await fetch('/api/auth/passkey/login-options', { method: 'POST' });
       if (!optionsRes.ok) {
         const errData = await optionsRes.json();
         throw new Error(errData.error || 'Failed to fetch options');

@@ -38,8 +38,8 @@ export const POST: APIRoute = async ({ request, cookies, locals, redirect }) => 
     const isJson = request.headers.get('Accept') === 'application/json';
     if (isJson) {
       return new Response(JSON.stringify({ success: true, redirect: '/dashboard' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        status: 201,
+        headers: { 'Content-Type': 'application/json', 'Location': '/dashboard' },
       });
     }
 

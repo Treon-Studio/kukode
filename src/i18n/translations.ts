@@ -170,6 +170,29 @@ export const ui = {
     'dashboard.rejected': 'Rejected',
     'dashboard.submittedOn': 'Submitted on ',
     'dashboard.rejectionReason': 'Rejection Reason:',
+    // Admin
+    'admin.flags.confirmDelete': 'Delete flag "{name}"? This cannot be undone.',
+    'admin.flags.updateError': 'Failed to update flag: {error}',
+    'admin.flags.deleteError': 'Failed to delete flag: {error}',
+    'admin.products.approveError': 'Failed to approve product',
+    'admin.products.rejectReasonRequired': 'Rejection reason is required',
+    'admin.products.rejectError': 'Failed to reject product',
+    'admin.products.viewDetails': 'View Details',
+    'admin.products.close': 'Close',
+
+    // Dashboard analytics
+    'dashboard.analytics.performanceFor': 'Performance analytics for ',
+    'dashboard.analytics.backToProducts': 'Back to products',
+    'dashboard.analytics.views': 'Views',
+    'dashboard.analytics.clicks': 'Clicks',
+    'dashboard.analytics.clicksOutbound': 'Clicks',
+    'dashboard.analytics.weeklyTrend': 'Weekly Traffic Trend',
+    'dashboard.analytics.topReferrers': 'Top Referrers',
+    'dashboard.analytics.directTraffic': 'Direct traffic',
+    'dashboard.analytics.topLocations': 'Top Locations',
+    'dashboard.analytics.unknownLocation': 'Unknown location',
+    'dashboard.analytics.noData': 'No data available.',
+
 
     // Leaderboard
     'leaderboard.title': 'Leaderboard',
@@ -223,6 +246,9 @@ export const ui = {
     'common.areYouSure': 'Are you sure?',
     'common.confirm': 'Confirm',
     'common.cancel': 'Cancel',
+    'common.error': 'Something went wrong',
+    'common.success': 'Success',
+    'common.delete': 'Delete',
 
     // Rate limit (used by middleware)
     'rateLimit.tooMany': 'Too many requests. Please try again later.',
@@ -406,6 +432,29 @@ export const ui = {
     'dashboard.rejected': 'Ditolak',
     'dashboard.submittedOn': 'Dikirim pada ',
     'dashboard.rejectionReason': 'Alasan Penolakan:',
+    // Admin
+    'admin.flags.confirmDelete': 'Hapus flag "{name}"? Tindakan ini tidak bisa dibatalkan.',
+    'admin.flags.updateError': 'Gagal mengubah flag: {error}',
+    'admin.flags.deleteError': 'Gagal menghapus flag: {error}',
+    'admin.products.approveError': 'Gagal approve produk',
+    'admin.products.rejectReasonRequired': 'Alasan penolakan wajib diisi',
+    'admin.products.rejectError': 'Gagal menolak produk',
+    'admin.products.viewDetails': 'Lihat Detail',
+    'admin.products.close': 'Tutup',
+
+    // Dashboard analytics
+    'dashboard.analytics.performanceFor': 'Analitik performa untuk ',
+    'dashboard.analytics.backToProducts': 'Kembali ke produk',
+    'dashboard.analytics.views': 'Tayangan',
+    'dashboard.analytics.clicks': 'Klik',
+    'dashboard.analytics.clicksOutbound': 'Klik Outbound',
+    'dashboard.analytics.weeklyTrend': 'Tren Lalu Lintas Mingguan',
+    'dashboard.analytics.topReferrers': 'Rujukan Teratas',
+    'dashboard.analytics.directTraffic': 'Lalu lintas langsung',
+    'dashboard.analytics.topLocations': 'Lokasi Teratas',
+    'dashboard.analytics.unknownLocation': 'Lokasi tidak diketahui',
+    'dashboard.analytics.noData': 'Tidak ada data tersedia.',
+
 
     // Leaderboard
     'leaderboard.title': 'Papan Peringkat',
@@ -458,6 +507,9 @@ export const ui = {
     'common.areYouSure': 'Apakah Anda yakin?',
     'common.confirm': 'Konfirmasi',
     'common.cancel': 'Batal',
+    'common.error': 'Terjadi kesalahan',
+    'common.success': 'Berhasil',
+    'common.delete': 'Hapus',
 
     // Rate limit
     'rateLimit.tooMany': 'Terlalu banyak permintaan. Silakan coba beberapa saat lagi.',
@@ -641,6 +693,29 @@ export const ui = {
     'dashboard.rejected': 'Ditolak',
     'dashboard.submittedOn': 'Dikirim pada ',
     'dashboard.rejectionReason': 'Alasan Panolakan:',
+    // Admin
+    'admin.flags.confirmDelete': 'Hapus flag "{name}"? Inda kawa dibatalakan.',
+    'admin.flags.updateError': 'Gagal manyunting flag: {error}',
+    'admin.flags.deleteError': 'Gagal mahapus flag: {error}',
+    'admin.products.approveError': 'Gagal manyetujui produk',
+    'admin.products.rejectReasonRequired': 'Alasan panulakan harus diisinya',
+    'admin.products.rejectError': 'Gagal manulak produk',
+    'admin.products.viewDetails': 'Lihat Detail',
+    'admin.products.close': 'Tutup',
+
+    // Dashboard analytics
+    'dashboard.analytics.performanceFor': 'Analitik kinerja untuk ',
+    'dashboard.analytics.backToProducts': 'Bali ka produk',
+    'dashboard.analytics.views': 'Tayaguan',
+    'dashboard.analytics.clicks': 'Klik',
+    'dashboard.analytics.clicksOutbound': 'Klik Ka Luar',
+    'dashboard.analytics.weeklyTrend': 'Tren Lalulintas Mingguan',
+    'dashboard.analytics.topReferrers': 'Rujukan Paling Banyak',
+    'dashboard.analytics.directTraffic': 'Lalulintas langsung',
+    'dashboard.analytics.topLocations': 'Lokasi Paling Banyak',
+    'dashboard.analytics.unknownLocation': 'Lokasi kada dikatahui',
+    'dashboard.analytics.noData': 'Kada ada data.',
+
 
     // Leaderboard
     'leaderboard.title': 'Papan Pungutan',
@@ -694,6 +769,9 @@ export const ui = {
     'common.areYouSure': 'Apa Pian yakin?',
     'common.confirm': 'Konfirmasi',
     'common.cancel': 'Batal',
+    'common.error': 'Ada nan salah',
+    'common.success': 'Barhasil',
+    'common.delete': 'Hapus',
 
     // Rate limit
     'rateLimit.tooMany': 'Terlalu banyak parmintaan. Silakan coba sakalawai.',
@@ -876,6 +954,29 @@ export const ui = {
     'dashboard.rejected': 'Ditolak',
     'dashboard.submittedOn': 'Dikirimake ing ',
     'dashboard.rejectionReason': 'Alesan Ditolak:',
+    // Admin
+    'admin.flags.confirmDelete': 'Busak flag "{name}"? Iki ora bisa dibatalake.',
+    'admin.flags.updateError': 'Gagal nganyari flag: {error}',
+    'admin.flags.deleteError': 'Gagal mbusak flag: {error}',
+    'admin.products.approveError': 'Gagal nyetujoni produk',
+    'admin.products.rejectReasonRequired': 'Alesane ditolak kudu diisi',
+    'admin.products.rejectError': 'Gagal nolak produk',
+    'admin.products.viewDetails': 'Deleng Rincian',
+    'admin.products.close': 'Tutup',
+
+    // Dashboard analytics
+    'dashboard.analytics.performanceFor': 'Analitik kinerja kanggo ',
+    'dashboard.analytics.backToProducts': 'Bali menyang produk',
+    'dashboard.analytics.views': 'Tayangan',
+    'dashboard.analytics.clicks': 'Klik',
+    'dashboard.analytics.clicksOutbound': 'Klik Metu',
+    'dashboard.analytics.weeklyTrend': 'Tren Lalu Lintas Mingguan',
+    'dashboard.analytics.topReferrers': 'Rujukan Ndhuwur',
+    'dashboard.analytics.directTraffic': 'Lalu lintas langsung',
+    'dashboard.analytics.topLocations': 'Lokasi Ndhuwur',
+    'dashboard.analytics.unknownLocation': 'Lokasi ora dingerteni',
+    'dashboard.analytics.noData': 'Ora ana data.',
+
 
     // Leaderboard
     'leaderboard.title': 'Papan Peringkat',
@@ -927,6 +1028,9 @@ export const ui = {
     'common.areYouSure': 'Apa Panjenengan yakin?',
     'common.confirm': 'Konfirmasi',
     'common.cancel': 'Batal',
+    'common.error': 'Ana sing salah',
+    'common.success': 'Sukses',
+    'common.delete': 'Busak',
 
     // Rate limit
     'rateLimit.tooMany': 'Kakehan panyuwunan. Monggo dicoba maneh sawetara.',
@@ -1146,6 +1250,30 @@ export const ui = {
     'dashboard.submittedOn': 'Dihantar pada ',
     'dashboard.rejectionReason': 'Sebab Penolakan:',
 
+    // Admin
+    'admin.flags.confirmDelete': 'Padam flag "{name}"? Tindakan ini tidak boleh diundur.',
+    'admin.flags.updateError': 'Gagal mengemas kini flag: {error}',
+    'admin.flags.deleteError': 'Gagal memadam flag: {error}',
+    'admin.products.approveError': 'Gagal meluluskan produk',
+    'admin.products.rejectReasonRequired': 'Sebab penolakan diperlukan',
+    'admin.products.rejectError': 'Gagal menolak produk',
+    'admin.products.viewDetails': 'Lihat Butiran',
+    'admin.products.close': 'Tutup',
+
+    // Dashboard analytics
+    'dashboard.analytics.performanceFor': 'Analitik prestasi untuk ',
+    'dashboard.analytics.backToProducts': 'Kembali ke produk',
+    'dashboard.analytics.views': 'Tontonan',
+    'dashboard.analytics.clicks': 'Klik',
+    'dashboard.analytics.clicksOutbound': 'Klik Keluar',
+    'dashboard.analytics.weeklyTrend': 'Tren Lalu Lintas Mingguan',
+    'dashboard.analytics.topReferrers': 'Rujukan Teratas',
+    'dashboard.analytics.directTraffic': 'Lalu lintas terus',
+    'dashboard.analytics.topLocations': 'Lokasi Teratas',
+    'dashboard.analytics.unknownLocation': 'Lokasi tidak diketahui',
+    'dashboard.analytics.noData': 'Tiada data tersedia.',
+
+
     // Leaderboard
     'leaderboard.title': 'Papan Kedudukan',
     'leaderboard.description': 'Laman web paling popular dengan undian terbanyak di Kukode.',
@@ -1196,5 +1324,8 @@ export const ui = {
     'common.areYouSure': 'Adakah anda pasti?',
     'common.confirm': 'Sahkan',
     'common.cancel': 'Batal',
+    'common.error': 'Berlaku ralat',
+    'common.success': 'Berjaya',
+    'common.delete': 'Padam',
   },
 } as const;

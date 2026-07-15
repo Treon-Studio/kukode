@@ -62,11 +62,16 @@ if (staticPage) {
   frontmatter = { ...staticPage.data, id: staticPage.id };
 } else {
   // 2. If not found, check Turso DB
-  const appRuntime = createAppRuntime(Astro.locals);
-  const dbSite = await appRuntime.runPromise(Effect.gen(function* () {
-    const repo = yield* ISiteRepository;
-    return yield* repo.getSiteDetailsWithVotes(slug, user?.id);
-  }));
+  let dbSite = null;
+  try {
+    const appRuntime = createAppRuntime(Astro.locals);
+    dbSite = await appRuntime.runPromise(Effect.gen(function* () {
+      const repo = yield* ISiteRepository;
+      return yield* repo.getSiteDetailsWithVotes(slug, user?.id);
+    }));
+  } catch (e) {
+    console.error('[Site page] DB lookup failed:', e);
+  }
 
   if (!dbSite) {
     return Astro.redirect('/404');

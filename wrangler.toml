@@ -3,6 +3,8 @@ compatibility_date = "2025-09-29"
 
 [vars]
 # For secrets (API keys, database URLs, auth tokens), use `npx wrangler secret put`.
+# Note: This page has try/catch fallback so non-existent slugs return 404 even
+# if the DB env vars are missing. Secret-stored vars are preferred for security.
 
 [triggers]
 crons = ["0 */6 * * *"]

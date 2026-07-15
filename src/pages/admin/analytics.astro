@@ -19,14 +19,20 @@ const appRuntime = createAppRuntime(env);
 const { dau, mau } = await appRuntime.runPromise(getPlatformStatsProgram());
 
 // 2. Fetch platform aggregates and recent transactions
+const fromParam = Astro.url.searchParams.get('from');
+const toParam = Astro.url.searchParams.get('to');
+const startDate = fromParam ? new Date(fromParam) : undefined;
+const endDate = toParam ? new Date(toParam + 'T23:59:59') : undefined;
+
 const overviewData = await appRuntime.runPromise(Effect.gen(function* () {
   const repo = yield* IAdminRepository;
-  return yield* repo.getAnalyticsOverview();
+  return yield* repo.getAnalyticsOverview({ startDate, endDate });
 }));
 
 const {
   usersCount,
   sitesCount,
+  approvedSitesCount,
   votesCount,
   commentsCount,
   totalRevenue,
@@ -40,6 +46,22 @@ const {
       Platform metrics, unique visitors tracking, and transaction records.
     </Text>
   </div>
+
+  {/* Date Range Filter */}
+  <form method="get" class="flex flex-wrap items-end gap-3 mb-8 p-4 bg-base-50 rounded-xl border border-base-200">
+    <div>
+      <label for="from" class="block text-xs font-medium text-base-500 mb-1">From</label>
+      <input type="date" id="from" name="from" value={Astro.url.searchParams.get('from') ?? ''}
+        class="block h-9 px-3 text-sm bg-white border border-base-200 rounded-lg text-base-700 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none" />
+    </div>
+    <div>
+      <label for="to" class="block text-xs font-medium text-base-500 mb-1">To</label>
+      <input type="date" id="to" name="to" value={Astro.url.searchParams.get('to') ?? ''}
+        class="block h-9 px-3 text-sm bg-white border border-base-200 rounded-lg text-base-700 focus:border-accent-500 focus:ring-accent-100 focus:ring-2 focus:outline-none" />
+    </div>
+    <button type="submit" class="h-9 px-4 text-sm font-semibold rounded-lg bg-accent-600 text-white hover:bg-accent-700 transition-colors">Apply</button>
+    <a href="/admin/analytics" class="h-9 px-4 text-sm font-medium rounded-lg bg-base-100 text-base-700 hover:bg-base-200 transition-colors inline-flex items-center">Reset</a>
+  </form>
 
   {/* Metrics Grid */}
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

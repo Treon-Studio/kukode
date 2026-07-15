@@ -4,6 +4,7 @@ import Button from '@/components/fundations/elements/Button.astro';
 import Text from '@/components/fundations/elements/Text.astro';
 import { createAppRuntime } from '@/infra/runtime/app.runtime';
 import { IAdminRepository } from '@/domain/admin';
+import { getLangFromLocals, useTranslations } from '@/i18n/utils';
 import AdminLayout from '@/layouts/AdminLayout.astro';
 
 const user = (Astro.locals as any).user;
@@ -12,6 +13,14 @@ const profile = (Astro.locals as any).profile;
 if (!user || profile?.role !== 'admin') {
   return Astro.redirect('/signin');
 }
+
+const lang = getLangFromLocals(Astro.locals);
+const t = useTranslations(lang);
+const adminLabels = {
+  approveError: t('admin.products.approveError'),
+  rejectReasonRequired: t('admin.products.rejectReasonRequired'),
+  rejectError: t('admin.products.rejectError'),
+};
 
 const appRuntime = createAppRuntime(Astro.locals);
 
@@ -188,7 +197,7 @@ const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
   </div>
 </AdminLayout>
 
-<script is:inline>
+<script is:inline define:vars={{ adminLabels }}>
   (() => {
     let pendingRejectId = null;
     const modal = document.getElementById('reject-modal');
@@ -216,7 +225,7 @@ const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
         } catch {
           btn.disabled = false;
           btn.textContent = 'Approve';
-          alert('Gagal approve produk');
+          alert(adminLabels.approveError);
         }
       });
     });
@@ -244,7 +253,7 @@ const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
       confirmBtn.addEventListener('click', async () => {
         const reason = reasonInput?.value?.trim();
         if (!reason) {
-          alert('Alasan penolakan wajib diisi');
+          alert(adminLabels.rejectReasonRequired);
           return;
         }
 
@@ -266,7 +275,7 @@ const recentSites = await appRuntime.runPromise(Effect.gen(function* () {
         } catch {
           confirmBtn.disabled = false;
           confirmBtn.textContent = 'Tolak Produk';
-          alert('Gagal menolak produk');
+          alert(adminLabels.rejectError);
         }
       });
     }
